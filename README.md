@@ -1,16 +1,15 @@
 # go-xmldsig
+XML Digital Signature
 
-XML Digital Signature (AS4 Support)
 ## Installation
-
-Install `goxmldsig` using `go get`:
+Install `go-xmldsig` using `go get`:
 
 ```
-$ go get github.com/deb-ict/go-xmldsig
+$ go get -u github.com/deb-ict/go-xmldsig
 ```
 
 ## Reference
-This code is based on repository [russellhaering/goxmldsig](https://github.com/russellhaering/goxmldsig) with a little C# SignedXml twist.  
+This code is based on repository [russellhaering/goxmldsig](https://github.com/russellhaering/goxmldsig) and C# SignedXml.  
 **If u star this repository, please star the original code repository as well!**  
 
 ## Purpose
