@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"io"
-	"log"
 	"strings"
 
 	"github.com/beevik/etree"
@@ -113,7 +112,6 @@ func (ref *Reference) loadXml(el *etree.Element) error {
 
 	// Get the reference attributes
 	ref.uri = el.SelectAttrValue("URI", "")
-	log.Printf("URI: %s", ref.uri)
 
 	// Get the transform list element
 	transformsElement := el.SelectElements("Transforms")
@@ -125,7 +123,6 @@ func (ref *Reference) loadXml(el *etree.Element) error {
 	transformElements := transformsElement[0].SelectElements("Transform")
 	for _, transformElement := range transformElements {
 		algorithm := transformElement.SelectAttrValue("Algorithm", "")
-		log.Printf("Transform Algorithm: %s", algorithm)
 
 		// Create the transform
 		transform, err := GetTransform(algorithm, ref)
@@ -160,7 +157,6 @@ func (ref *Reference) loadXml(el *etree.Element) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("DigestValue: %x", ref.digestValue)
 
 	ref.cachedXml = el
 	return nil

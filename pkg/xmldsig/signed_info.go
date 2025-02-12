@@ -3,7 +3,6 @@ package xmldsig
 import (
 	"crypto/x509"
 	"errors"
-	"log"
 
 	"github.com/beevik/etree"
 )
@@ -42,14 +41,6 @@ func (si *SignedInfo) validateSignature(cert *x509.Certificate) error {
 		return err
 	}
 
-	digestMethod, err := si.signatureMethod.CreateHashAlgorithm()
-	if err != nil {
-		return err
-	}
-	digestMethod.Write(canonicalizedData)
-	digestValue := digestMethod.Sum(nil)
-	log.Printf("digestValue: %v", digestValue)
-
 	signatureAlgorithm, err := si.signatureMethod.GetSignatureAlgorithm()
 	if err != nil {
 		return err
@@ -59,17 +50,6 @@ func (si *SignedInfo) validateSignature(cert *x509.Certificate) error {
 	if err != nil {
 		return err
 	}
-
-	/*
-		if si.signatureMethod == "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256" {
-			err = rsa.VerifyPKCS1v15(key, crypto.SHA256, digestValue, si.signature.signatureValue)
-			if err != nil {
-				return err
-			}
-		} else {
-			return errors.New("signature method not supported")
-		}
-	*/
 
 	return nil
 }
