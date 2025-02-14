@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/beevik/etree"
+	rhtree "github.com/russellhaering/goxmldsig/etreeutils"
 )
 
 type SignedInfo struct {
@@ -36,7 +37,16 @@ func (si *SignedInfo) validateDigests() error {
 }
 
 func (si *SignedInfo) validateSignature(cert *x509.Certificate) error {
-	canonicalizedData, err := si.canonicalizer.Canonicalize(si.cachedXml)
+	elementNsContext, err := rhtree.NSBuildParentContext(si.cachedXml)
+	if err != nil {
+		return err
+	}
+	detachtedElement, err := rhtree.NSDetatch(elementNsContext, si.cachedXml)
+	if err != nil {
+		return err
+	}
+
+	canonicalizedData, err := si.canonicalizer.Canonicalize(detachtedElement)
 	if err != nil {
 		return err
 	}

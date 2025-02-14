@@ -12,11 +12,22 @@ var (
 )
 
 var (
-	registeredTransforms map[string]CreateTransformMethod = map[string]CreateTransformMethod{
-		"http://www.w3.org/2001/10/xml-exc-c14n#": NewExclusiveC14NTransform,
-	}
 	registeredCanonicalizers map[string]CreateCanonicalizerMethod = map[string]CreateCanonicalizerMethod{
-		"http://www.w3.org/2001/10/xml-exc-c14n#": NewExclusiveC14NCanonicalizer,
+		C14N10RecNamespaceUri:             NewC14N10RecCanonicalizer,
+		C14N10RecWithCommentsNamespaceUri: NewC14N10RecWithCommentsCanonicalizer,
+		C14N10ExcNamespaceUri:             NewC14N10ExcCanonicalizer,
+		C14N10ExcWithCommentsNamespaceUri: NewC14N10ExcWithCommentsCanonicalizer,
+		C14N11NamespaceUri:                NewC14N11Canonicalizer,
+		C14N11WithCommentsNamespaceUri:    NewC14N11WithCommentsCanonicalizer,
+	}
+	registeredTransforms map[string]CreateTransformMethod = map[string]CreateTransformMethod{
+		EnvelopedSignatureTransform:       NewEnvelopedSignatureTransform,
+		C14N10RecNamespaceUri:             NewC14N10RecTransform,
+		C14N10RecWithCommentsNamespaceUri: NewC14N10RecWithCommentsTransform,
+		C14N10ExcNamespaceUri:             NewC14N10ExcTransform,
+		C14N10ExcWithCommentsNamespaceUri: NewC14N10ExcWithCommentsTransform,
+		C14N11NamespaceUri:                NewC14N11Transform,
+		C14N11WithCommentsNamespaceUri:    NewC14N11WithCommentsTransform,
 	}
 	referenceElementResolvers map[string]ResolveReferenceMethod = map[string]ResolveReferenceMethod{}
 )

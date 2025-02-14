@@ -1,7 +1,7 @@
 package xmldsig
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/beevik/etree"
 )
@@ -9,6 +9,7 @@ import (
 type CreateCanonicalizerMethod func() Canonicalizer
 
 type Canonicalizer interface {
+	GetAlgorithm() string
 	Canonicalize(el *etree.Element) ([]byte, error)
 	LoadXml(el *etree.Element) error
 }
@@ -26,5 +27,5 @@ func GetCanonicalizer(uri string, el *etree.Element) (Canonicalizer, error) {
 		}
 		return m, nil
 	}
-	return nil, errors.New("transform not found")
+	return nil, fmt.Errorf("no canonicalizer registered for URI: %s", uri)
 }

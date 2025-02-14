@@ -9,10 +9,10 @@ import (
 type CreateTransformMethod func(reference *Reference) Transform
 
 type Transform interface {
+	GetAlgorithm() string
+	GetReference() *Reference
 	TransformXmlElement(el *etree.Element) ([]byte, error)
 	TransformData(data []byte) ([]byte, error)
-	GetAlgorithm() string
-	Reference() *Reference
 	LoadXml(el *etree.Element) error
 }
 
