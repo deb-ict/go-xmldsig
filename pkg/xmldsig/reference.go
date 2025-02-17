@@ -29,9 +29,14 @@ func (ref *Reference) root() *SignedXml {
 }
 
 func (ref *Reference) validateDigest() error {
-	if strings.HasPrefix(ref.uri, "#") {
-		elementId := ref.uri[1:]
-		element := ref.root().document.FindElement("//*[@Id='" + elementId + "']")
+	if ref.uri == "" || strings.HasPrefix(ref.uri, "#") {
+		var element *etree.Element
+		if ref.uri == "" {
+			element = ref.root().signature.cachedXml
+		} else {
+			elementId := ref.uri[1:]
+			element = ref.root().document.FindElement("//*[@Id='" + elementId + "']")
+		}
 		if element == nil {
 			return errors.New("element not found")
 		}
