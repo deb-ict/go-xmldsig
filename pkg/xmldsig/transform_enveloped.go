@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/beevik/etree"
+	rhdsig "github.com/russellhaering/goxmldsig"
 )
 
 const (
@@ -28,9 +29,14 @@ func (t *envelopedSignatureTransform) LoadXml(el *etree.Element) error {
 
 func (t *envelopedSignatureTransform) TransformXmlElement(el *etree.Element) ([]byte, error) {
 	signaturePath := t.mapPathToElement(el, t.reference.signedInfo.signature.cachedXml)
+
+	el = el.Copy()
 	if !t.removeElementAtPath(el, signaturePath) {
 		return nil, errors.New("Error applying canonicalization transform: Signature not found")
 	}
+
+	canonicalizer := rhdsig.MakeNullCanonicalizer()
+	return canonicalizer.Canonicalize(el)
 }
 
 func (t *envelopedSignatureTransform) TransformData(data []byte) ([]byte, error) {

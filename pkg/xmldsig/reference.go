@@ -32,7 +32,7 @@ func (ref *Reference) validateDigest() error {
 	if ref.uri == "" || strings.HasPrefix(ref.uri, "#") {
 		var element *etree.Element
 		if ref.uri == "" {
-			element = ref.root().signature.cachedXml
+			element = ref.root().document.Root()
 		} else {
 			elementId := ref.uri[1:]
 			element = ref.root().document.FindElement("//*[@Id='" + elementId + "']")
