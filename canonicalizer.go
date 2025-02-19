@@ -1,6 +1,7 @@
 package xmldsig
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/beevik/etree"
@@ -10,7 +11,7 @@ type CreateCanonicalizerMethod func() Canonicalizer
 
 type Canonicalizer interface {
 	GetAlgorithm() string
-	Canonicalize(el *etree.Element) ([]byte, error)
+	Canonicalize(ctx context.Context, el *etree.Element) ([]byte, error)
 	LoadXml(el *etree.Element) error
 }
 

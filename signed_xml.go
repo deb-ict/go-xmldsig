@@ -1,6 +1,7 @@
 package xmldsig
 
 import (
+	"context"
 	"crypto/x509"
 	"encoding/base64"
 	"errors"
@@ -25,16 +26,16 @@ func LoadSignedXml(doc *etree.Document) (*SignedXml, error) {
 	return xml, nil
 }
 
-func (xml *SignedXml) ValidateSignature(cert *x509.Certificate) error {
+func (xml *SignedXml) ValidateSignature(ctx context.Context, cert *x509.Certificate) error {
 	if xml.signature == nil || xml.signature.signedInfo == nil {
 		return errors.New("signature or signed info is nil")
 	}
-	err := xml.signature.signedInfo.validateDigests()
+	err := xml.signature.signedInfo.validateDigests(ctx)
 	if err != nil {
 		return err
 	}
 
-	err = xml.signature.signedInfo.validateSignature(cert)
+	err = xml.signature.signedInfo.validateSignature(ctx, cert)
 	if err != nil {
 		return err
 	}
@@ -88,8 +89,8 @@ func (xml *SignedXml) GetCertificate() (*x509.Certificate, error) {
 			return nil, errors.New("signature does not contain a URI")
 		}
 
-		securityTokenElements := xml.document.FindElements("//BinarySecurityToken")
-		if len(securityTokenElements) != 0 {
+		securityTokenElements := xml.document.FindElements("//BinarySecurityToken[@Id='" + uri[1:] + "']")
+		if len(securityTokenElements) != 1 {
 			return nil, errors.New("document does not contain a single BinarySecurityToken element")
 		}
 

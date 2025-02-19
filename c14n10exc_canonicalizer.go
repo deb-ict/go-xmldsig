@@ -1,6 +1,7 @@
 package xmldsig
 
 import (
+	"context"
 	"errors"
 
 	"github.com/beevik/etree"
@@ -41,7 +42,7 @@ func (can *c14N10ExcCanonicalizer) GetPrefixList() string {
 	return can.prefixList
 }
 
-func (can *c14N10ExcCanonicalizer) Canonicalize(el *etree.Element) ([]byte, error) {
+func (can *c14N10ExcCanonicalizer) Canonicalize(ctx context.Context, el *etree.Element) ([]byte, error) {
 	canonicalizer := can.makeInternalCanonicalizer(can.prefixList)
 	canonicalized, err := canonicalizer.Canonicalize(el)
 	if err != nil {

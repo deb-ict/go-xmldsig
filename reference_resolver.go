@@ -1,10 +1,11 @@
 package xmldsig
 
 import (
+	"context"
 	"io"
 )
 
-type ResolveReferenceMethod func(reference *Reference) (io.Reader, error)
+type ResolveReferenceMethod func(ctx context.Context, reference *Reference) (io.Reader, error)
 
 func RegisterReferenceElementResolver(prefix string, method ResolveReferenceMethod) {
 	referenceElementResolvers[prefix] = method

@@ -1,6 +1,7 @@
 package xmldsig
 
 import (
+	"context"
 	"errors"
 
 	"github.com/beevik/etree"
@@ -11,8 +12,8 @@ type CreateTransformMethod func(reference *Reference) Transform
 type Transform interface {
 	GetAlgorithm() string
 	GetReference() *Reference
-	TransformXmlElement(el *etree.Element) ([]byte, error)
-	TransformData(data []byte) ([]byte, error)
+	TransformXmlElement(ctx context.Context, el *etree.Element) ([]byte, error)
+	TransformData(ctx context.Context, data []byte) ([]byte, error)
 	LoadXml(el *etree.Element) error
 }
 

@@ -1,6 +1,7 @@
 package xmldsig
 
 import (
+	"context"
 	"errors"
 
 	"github.com/beevik/etree"
@@ -38,7 +39,7 @@ func (t *c14N10RecTransform) GetReference() *Reference {
 	return t.reference
 }
 
-func (t *c14N10RecTransform) TransformXmlElement(el *etree.Element) ([]byte, error) {
+func (t *c14N10RecTransform) TransformXmlElement(ctx context.Context, el *etree.Element) ([]byte, error) {
 	elementNsContext, err := rhtree.NSBuildParentContext(el)
 	if err != nil {
 		return nil, err
@@ -48,10 +49,10 @@ func (t *c14N10RecTransform) TransformXmlElement(el *etree.Element) ([]byte, err
 		return nil, err
 	}
 
-	return t.canonicalizer.Canonicalize(detachtedElement)
+	return t.canonicalizer.Canonicalize(ctx, detachtedElement)
 }
 
-func (t *c14N10RecTransform) TransformData(data []byte) ([]byte, error) {
+func (t *c14N10RecTransform) TransformData(ctx context.Context, data []byte) ([]byte, error) {
 	return nil, errors.New("exclusive c14n transform cannot be applied to data")
 }
 

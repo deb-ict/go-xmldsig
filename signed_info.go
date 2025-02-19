@@ -1,6 +1,7 @@
 package xmldsig
 
 import (
+	"context"
 	"crypto/x509"
 	"errors"
 
@@ -26,9 +27,9 @@ func (si *SignedInfo) root() *SignedXml {
 	return si.signature.root()
 }
 
-func (si *SignedInfo) validateDigests() error {
+func (si *SignedInfo) validateDigests(ctx context.Context) error {
 	for _, reference := range si.references {
-		err := reference.validateDigest()
+		err := reference.validateDigest(ctx)
 		if err != nil {
 			return err
 		}
@@ -36,7 +37,7 @@ func (si *SignedInfo) validateDigests() error {
 	return nil
 }
 
-func (si *SignedInfo) validateSignature(cert *x509.Certificate) error {
+func (si *SignedInfo) validateSignature(ctx context.Context, cert *x509.Certificate) error {
 	elementNsContext, err := rhtree.NSBuildParentContext(si.cachedXml)
 	if err != nil {
 		return err
@@ -46,7 +47,7 @@ func (si *SignedInfo) validateSignature(cert *x509.Certificate) error {
 		return err
 	}
 
-	canonicalizedData, err := si.canonicalizer.Canonicalize(detachtedElement)
+	canonicalizedData, err := si.canonicalizer.Canonicalize(ctx, detachtedElement)
 	if err != nil {
 		return err
 	}

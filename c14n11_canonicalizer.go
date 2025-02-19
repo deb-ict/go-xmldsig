@@ -1,6 +1,8 @@
 package xmldsig
 
 import (
+	"context"
+
 	"github.com/beevik/etree"
 	rhdsig "github.com/russellhaering/goxmldsig"
 )
@@ -34,7 +36,7 @@ func (can *c14N11Canonicalizer) GetAlgorithm() string {
 	}
 }
 
-func (can *c14N11Canonicalizer) Canonicalize(el *etree.Element) ([]byte, error) {
+func (can *c14N11Canonicalizer) Canonicalize(ctx context.Context, el *etree.Element) ([]byte, error) {
 	canonicalizer := can.makeInternalCanonicalizer()
 	canonicalized, err := canonicalizer.Canonicalize(el)
 	if err != nil {

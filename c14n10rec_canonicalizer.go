@@ -1,6 +1,8 @@
 package xmldsig
 
 import (
+	"context"
+
 	"github.com/beevik/etree"
 	rhdsig "github.com/russellhaering/goxmldsig"
 	rhtree "github.com/russellhaering/goxmldsig/etreeutils"
@@ -35,7 +37,7 @@ func (can *c14N10RecCanonicalizer) GetAlgorithm() string {
 	}
 }
 
-func (can *c14N10RecCanonicalizer) Canonicalize(el *etree.Element) ([]byte, error) {
+func (can *c14N10RecCanonicalizer) Canonicalize(ctx context.Context, el *etree.Element) ([]byte, error) {
 	elementNsContext, err := rhtree.NSBuildParentContext(el)
 	if err != nil {
 		return nil, err

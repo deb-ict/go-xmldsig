@@ -1,6 +1,7 @@
 package xmldsig
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"io"
@@ -24,11 +25,22 @@ func newReference(signedInfo *SignedInfo) *Reference {
 	}
 }
 
+func (ref *Reference) GetUri() string {
+	return ref.uri
+}
+
+func (ref *Reference) GetUriWithoutPrefix(prefix string) string {
+	if strings.HasPrefix(ref.uri, prefix) {
+		return ref.uri[len(prefix):]
+	}
+	return ref.uri
+}
+
 func (ref *Reference) root() *SignedXml {
 	return ref.signedInfo.root()
 }
 
-func (ref *Reference) validateDigest() error {
+func (ref *Reference) validateDigest(ctx context.Context) error {
 	if ref.uri == "" || strings.HasPrefix(ref.uri, "#") {
 		var element *etree.Element
 		if ref.uri == "" {
@@ -46,9 +58,9 @@ func (ref *Reference) validateDigest() error {
 		var transformError error
 		for _, transform := range ref.transforms {
 			if transformedData == nil {
-				transformedData, transformError = transform.TransformXmlElement(element)
+				transformedData, transformError = transform.TransformXmlElement(ctx, element)
 			} else {
-				transformedData, transformError = transform.TransformData(transformedData)
+				transformedData, transformError = transform.TransformData(ctx, transformedData)
 			}
 			if transformError != nil {
 				return transformError
@@ -70,7 +82,7 @@ func (ref *Reference) validateDigest() error {
 		for _, prefix := range prefixes {
 			if strings.HasPrefix(ref.uri, prefix) {
 				if method, ok := GetReferenceElementResolver(prefix); ok {
-					reader, err := method(ref)
+					reader, err := method(ctx, ref)
 					if err != nil {
 						return err
 					}
@@ -81,7 +93,7 @@ func (ref *Reference) validateDigest() error {
 						return transformError
 					}
 					for _, transform := range ref.transforms {
-						transformedData, transformError = transform.TransformData(transformedData)
+						transformedData, transformError = transform.TransformData(ctx, transformedData)
 						if transformError != nil {
 							return transformError
 						}

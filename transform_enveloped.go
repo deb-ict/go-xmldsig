@@ -1,6 +1,7 @@
 package xmldsig
 
 import (
+	"context"
 	"errors"
 
 	"github.com/beevik/etree"
@@ -15,6 +16,12 @@ type envelopedSignatureTransform struct {
 	reference *Reference
 }
 
+func NewEnvelopedSignatureTransform(reference *Reference) Transform {
+	return &envelopedSignatureTransform{
+		reference: reference,
+	}
+}
+
 func (t *envelopedSignatureTransform) GetAlgorithm() string {
 	return EnvelopedSignatureTransform
 }
@@ -27,7 +34,7 @@ func (t *envelopedSignatureTransform) LoadXml(el *etree.Element) error {
 	return nil
 }
 
-func (t *envelopedSignatureTransform) TransformXmlElement(el *etree.Element) ([]byte, error) {
+func (t *envelopedSignatureTransform) TransformXmlElement(ctx context.Context, el *etree.Element) ([]byte, error) {
 	signaturePath := t.mapPathToElement(el, t.reference.signedInfo.signature.cachedXml)
 
 	el = el.Copy()
@@ -39,7 +46,7 @@ func (t *envelopedSignatureTransform) TransformXmlElement(el *etree.Element) ([]
 	return canonicalizer.Canonicalize(el)
 }
 
-func (t *envelopedSignatureTransform) TransformData(data []byte) ([]byte, error) {
+func (t *envelopedSignatureTransform) TransformData(ctx context.Context, data []byte) ([]byte, error) {
 	return nil, errors.New("enveloped signature transform cannot be applied to data")
 }
 
@@ -82,10 +89,4 @@ func (t *envelopedSignatureTransform) removeElementAtPath(el *etree.Element, pat
 	}
 
 	return t.removeElementAtPath(childElement, path[1:])
-}
-
-func NewEnvelopedSignatureTransform(reference *Reference) Transform {
-	return &envelopedSignatureTransform{
-		reference: reference,
-	}
 }
