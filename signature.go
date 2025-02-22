@@ -5,13 +5,20 @@ import (
 	"errors"
 
 	"github.com/beevik/etree"
+	"github.com/deb-ict/go-xml"
 )
 
 type Signature struct {
-	signedXml      *SignedXml
-	signedInfo     *SignedInfo
-	cachedXml      *etree.Element
-	signatureValue []byte
+	XMLName        xml.Name        `xml:"http://www.w3.org/2000/09/xmldsig# Signature"`
+	Attrs          []*xml.Attr     `xml:",any,attr"`
+	Id             string          `xml:"Id,attr,omitempty"`
+	SignedInfo     *SignedInfo     `xml:"http://www.w3.org/2000/09/xmldsig# SignedInfo"`
+	SignatureValue *SignatureValue `xml:"http://www.w3.org/2000/09/xmldsig# SignatureValue"`
+	//KeyInfo        *KeyInfo        `xml:"http://www.w3.org/2000/09/xmldsig# KeyInfo,omitempty"`
+	//Object         []*Object       `xml:"http://www.w3.org/2000/09/xmldsig# Object,omitempty"`
+	signedXml *SignedXml
+	cachedXml *etree.Element
+	//signatureValue []byte
 }
 
 func newSignature(signedXml *SignedXml) *Signature {
@@ -37,8 +44,8 @@ func (sig *Signature) loadXml(el *etree.Element) error {
 	if len(signedInfoElements) != 1 {
 		return errors.New("element does not contain a single SignedInfo element")
 	}
-	sig.signedInfo = newSignedInfo(sig)
-	err := sig.signedInfo.loadXml(signedInfoElements[0])
+	sig.SignedInfo = newSignedInfo(sig)
+	err := sig.SignedInfo.loadXml(signedInfoElements[0])
 	if err != nil {
 		return err
 	}

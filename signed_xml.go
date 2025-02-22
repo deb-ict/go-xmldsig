@@ -26,21 +26,21 @@ func LoadSignedXml(doc *etree.Document) (*SignedXml, error) {
 	return xml, nil
 }
 
-func (xml *SignedXml) ValidateSignature(ctx context.Context, cert *x509.Certificate) error {
+func (xml *SignedXml) ValidateSignature(ctx context.Context, cert *x509.Certificate) ([]*etree.Element, error) {
 	if xml.signature == nil || xml.signature.signedInfo == nil {
-		return errors.New("signature or signed info is nil")
+		return nil, errors.New("signature or signed info is nil")
 	}
-	err := xml.signature.signedInfo.validateDigests(ctx)
+	validated, err := xml.signature.signedInfo.validateDigests(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = xml.signature.signedInfo.validateSignature(ctx, cert)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return validated, nil
 }
 
 func (xml *SignedXml) GetCertificate() (*x509.Certificate, error) {

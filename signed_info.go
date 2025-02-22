@@ -27,14 +27,16 @@ func (si *SignedInfo) root() *SignedXml {
 	return si.signature.root()
 }
 
-func (si *SignedInfo) validateDigests(ctx context.Context) error {
+func (si *SignedInfo) validateDigests(ctx context.Context) ([]*etree.Element, error) {
+	validated := make([]*etree.Element, 0)
 	for _, reference := range si.references {
 		err := reference.validateDigest(ctx)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		validated = append(validated, reference.cachedXml)
 	}
-	return nil
+	return validated, nil
 }
 
 func (si *SignedInfo) validateSignature(ctx context.Context, cert *x509.Certificate) error {
