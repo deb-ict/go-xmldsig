@@ -6,16 +6,16 @@ import (
 	"hash"
 )
 
-type SignatureMethod int
+type SignatureMethodEnum int
 
 const (
-	SignatureMethod_RSA_SHA1 SignatureMethod = iota
+	SignatureMethod_RSA_SHA1 SignatureMethodEnum = iota
 	SignatureMethod_RSA_SHA256
 	SignatureMethod_RSA_SHA384
 	SignatureMethod_RSA_SHA512
 )
 
-func (s SignatureMethod) GetUri() string {
+func (s SignatureMethodEnum) GetUri() string {
 	switch s {
 	case SignatureMethod_RSA_SHA1:
 		return "http://www.w3.org/2000/09/xmldsig#rsa-sha1"
@@ -29,7 +29,7 @@ func (s SignatureMethod) GetUri() string {
 	return ""
 }
 
-func (s SignatureMethod) GetHashAlgorithm() (crypto.Hash, error) {
+func (s SignatureMethodEnum) GetHashAlgorithm() (crypto.Hash, error) {
 	switch s {
 	case SignatureMethod_RSA_SHA1:
 		return crypto.SHA1, nil
@@ -43,7 +43,7 @@ func (s SignatureMethod) GetHashAlgorithm() (crypto.Hash, error) {
 	return 0, ErrInvalidSignatureMethod
 }
 
-func (s SignatureMethod) CreateHashAlgorithm() (hash.Hash, error) {
+func (s SignatureMethodEnum) CreateHashAlgorithm() (hash.Hash, error) {
 	hash, err := s.GetHashAlgorithm()
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func (s SignatureMethod) CreateHashAlgorithm() (hash.Hash, error) {
 	return hash.New(), nil
 }
 
-func (s SignatureMethod) GetSignatureAlgorithm() (x509.SignatureAlgorithm, error) {
+func (s SignatureMethodEnum) GetSignatureAlgorithm() (x509.SignatureAlgorithm, error) {
 	switch s {
 	case SignatureMethod_RSA_SHA1:
 		return x509.SHA1WithRSA, nil
@@ -65,7 +65,7 @@ func (s SignatureMethod) GetSignatureAlgorithm() (x509.SignatureAlgorithm, error
 	return 0, ErrInvalidSignatureMethod
 }
 
-func GetSignatureMethod(uri string) (SignatureMethod, error) {
+func GetSignatureMethod(uri string) (SignatureMethodEnum, error) {
 	switch uri {
 	case "http://www.w3.org/2000/09/xmldsig#rsa-sha1":
 		return SignatureMethod_RSA_SHA1, nil

@@ -1,9 +1,6 @@
 package xmldsig
 
 import (
-	"encoding/base64"
-	"errors"
-
 	"github.com/beevik/etree"
 	"github.com/deb-ict/go-xml"
 )
@@ -18,7 +15,6 @@ type Signature struct {
 	//Object         []*Object       `xml:"http://www.w3.org/2000/09/xmldsig# Object,omitempty"`
 	signedXml *SignedXml
 	cachedXml *etree.Element
-	//signatureValue []byte
 }
 
 func newSignature(signedXml *SignedXml) *Signature {
@@ -27,43 +23,72 @@ func newSignature(signedXml *SignedXml) *Signature {
 	}
 }
 
-func (sig *Signature) root() *SignedXml {
-	return sig.signedXml
+func (xml *Signature) root() *SignedXml {
+	return xml.signedXml
 }
 
-func (sig *Signature) loadXml(el *etree.Element) error {
-	if el == nil {
-		return errors.New("element cannot be nil")
-	}
-	if el.Tag != "Signature" || el.NamespaceURI() != XmlDSigNamespaceUri {
-		return errors.New("element is not a signature element")
+func (xml *Signature) loadXml(el *etree.Element) error {
+	err := validateElement(el, "Signature", XmlDSigNamespaceUri)
+	if err != nil {
+		return err
 	}
 
+	// Get the attributes
+	xml.Id = el.SelectAttrValue("Id", "")
+
 	// Get the signed info
-	signedInfoElements := el.SelectElements("SignedInfo")
-	if len(signedInfoElements) != 1 {
-		return errors.New("element does not contain a single SignedInfo element")
+	signedInfoElement, err := getSingleChildElement(el, "SignedInfo", XmlDSigNamespaceUri)
+	if err != nil {
+		return err
 	}
-	sig.SignedInfo = newSignedInfo(sig)
-	err := sig.SignedInfo.loadXml(signedInfoElements[0])
+	xml.SignedInfo = newSignedInfo(xml)
+	err = xml.SignedInfo.loadXml(signedInfoElement)
 	if err != nil {
 		return err
 	}
 
 	// Get the signature value
-	signatureValueElements := el.SelectElements("SignatureValue")
-	if len(signatureValueElements) != 1 {
-		return errors.New("element does not contain a single SignatureValue element")
-	}
-	signatureValue, err := base64.StdEncoding.DecodeString(signatureValueElements[0].Text())
+	signatureValueElement, err := getSingleChildElement(el, "SignatureValue", XmlDSigNamespaceUri)
 	if err != nil {
 		return err
 	}
-	sig.signatureValue = signatureValue
+	xml.SignatureValue = newSignatureValue(xml)
+	err = xml.SignatureValue.loadXml(signatureValueElement)
+	if err != nil {
+		return err
+	}
 
-	// Get the optional key info
+	// Get the key info
 	//TODO: keyInfoElements := el.SelectElements("KeyInfo[namespace-uri()='" + XmlDSigNamespaceUri + "']")
 
-	sig.cachedXml = el
+	xml.cachedXml = el
 	return nil
+}
+
+func (xml *Signature) getXml() (*etree.Element, error) {
+	el := etree.NewElement("Signature")
+	el.Space = xml.root().getElementSpace(XmlDSigNamespaceUri)
+
+	if xml.Id != "" {
+		el.CreateAttr("Id", xml.Id)
+	}
+
+	// Add the signed info
+	signedInfoEl, err := xml.SignedInfo.getXml()
+	if err != nil {
+		return nil, err
+	}
+	el.AddChild(signedInfoEl)
+
+	// Add the signature value
+	signatureValueEl, err := xml.SignatureValue.getXml()
+	if err != nil {
+		return nil, err
+	}
+	el.AddChild(signatureValueEl)
+
+	// Add the key info
+	//TODO: KeyInfo
+
+	return el, nil
 }

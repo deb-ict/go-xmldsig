@@ -10,8 +10,10 @@ import (
 )
 
 type SignedXml struct {
-	document  *etree.Document
-	signature *Signature
+	document   *etree.Document
+	signature  *Signature
+	nsUris     map[string]string
+	nsPrefixes map[string]string
 }
 
 func LoadSignedXml(doc *etree.Document) (*SignedXml, error) {
@@ -27,15 +29,15 @@ func LoadSignedXml(doc *etree.Document) (*SignedXml, error) {
 }
 
 func (xml *SignedXml) ValidateSignature(ctx context.Context, cert *x509.Certificate) ([]*etree.Element, error) {
-	if xml.signature == nil || xml.signature.signedInfo == nil {
+	if xml.signature == nil || xml.signature.SignedInfo == nil {
 		return nil, errors.New("signature or signed info is nil")
 	}
-	validated, err := xml.signature.signedInfo.validateDigests(ctx)
+	validated, err := xml.signature.SignedInfo.validateDigests(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	err = xml.signature.signedInfo.validateSignature(ctx, cert)
+	err = xml.signature.SignedInfo.validateSignature(ctx, cert)
 	if err != nil {
 		return nil, err
 	}
@@ -107,6 +109,19 @@ func (xml *SignedXml) GetCertificate() (*x509.Certificate, error) {
 	}
 
 	return nil, errors.New("certificate not found")
+}
+
+func (xml *SignedXml) SetNamespacePrefix(prefix string, uri string) {
+	xml.nsPrefixes[uri] = prefix
+	xml.nsUris[prefix] = uri
+}
+
+func (xml *SignedXml) getElementSpace(uri string) string {
+	prefix, found := xml.nsPrefixes[uri]
+	if !found {
+		return uri
+	}
+	return prefix
 }
 
 func (xml *SignedXml) loadXml(doc *etree.Document) error {
