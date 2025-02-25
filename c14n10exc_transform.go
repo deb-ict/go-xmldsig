@@ -53,17 +53,17 @@ func (t *c14N10ExcTransform) TransformData(ctx context.Context, data []byte) ([]
 	return nil, errors.New("exclusive c14n transform cannot be applied to data")
 }
 
-func (t *c14N10ExcTransform) LoadXml(el *etree.Element) error {
+func (t *c14N10ExcTransform) ReadXml(el *etree.Element) error {
 	err := validateElement(el, "Transform", XmlDSigNamespaceUri)
 	if err != nil {
 		return err
 	}
 
-	t.canonicalizer.LoadXml(el)
+	t.canonicalizer.ReadXml(el)
 
 	return nil
 }
 
-func (t *c14N10ExcTransform) GetXml() (*etree.Element, error) {
-	return t.canonicalizer.GetXml()
+func (t *c14N10ExcTransform) WriteXml(el *etree.Element) error {
+	return t.canonicalizer.WriteXml(el)
 }

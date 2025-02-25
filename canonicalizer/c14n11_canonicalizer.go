@@ -41,12 +41,12 @@ func (can *c14N11Canonicalizer) Canonicalize(ctx context.Context, el *etree.Elem
 	return canonicalized, nil
 }
 
-func (can *c14N11Canonicalizer) LoadXml(el *etree.Element) error {
+func (can *c14N11Canonicalizer) ReadXml(el *etree.Element) error {
 	return nil
 }
 
-func (can *c14N11Canonicalizer) GetXml() (*etree.Element, error) {
-	return nil, nil
+func (can *c14N11Canonicalizer) WriteXml(el *etree.Element) error {
+	return nil
 }
 
 func (can *c14N11Canonicalizer) makeInternalCanonicalizer() rhdsig.Canonicalizer {

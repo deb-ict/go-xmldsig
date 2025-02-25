@@ -53,18 +53,16 @@ func (t *c14N10RecTransform) TransformData(ctx context.Context, data []byte) ([]
 	return nil, errors.New("exclusive c14n transform cannot be applied to data")
 }
 
-func (t *c14N10RecTransform) LoadXml(el *etree.Element) error {
-	if el == nil {
-		return errors.New("element cannot be nil")
+func (t *c14N10RecTransform) ReadXml(el *etree.Element) error {
+	err := validateElement(el, "Transform", XmlDSigNamespaceUri)
+	if err != nil {
+		return err
 	}
-	if el.Tag != "Transform" || el.NamespaceURI() != XmlDSigNamespaceUri {
-		return errors.New("element is not a transform element")
-	}
-	t.canonicalizer.LoadXml(el)
+	t.canonicalizer.ReadXml(el)
 
 	return nil
 }
 
-func (t *c14N10RecTransform) GetXml() (*etree.Element, error) {
-	return t.canonicalizer.GetXml()
+func (t *c14N10RecTransform) WriteXml(el *etree.Element) error {
+	return t.canonicalizer.WriteXml(el)
 }

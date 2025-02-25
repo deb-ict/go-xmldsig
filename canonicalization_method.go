@@ -36,11 +36,7 @@ func (xml *CanonicalizationMethod) loadXml(el *etree.Element) error {
 
 	xml.Algorithm = el.SelectAttrValue("Algorithm", "")
 
-	canonicalizer, err := canonicalizer.GetCanonicalizer(xml.Algorithm)
-	if err != nil {
-		return err
-	}
-	err = canonicalizer.LoadXml(el)
+	canonicalizer, err := canonicalizer.LoadCanonicalizer(xml.Algorithm, el)
 	if err != nil {
 		return err
 	}
@@ -59,11 +55,10 @@ func (xml *CanonicalizationMethod) getXml() (*etree.Element, error) {
 	if xml.canonicalizer == nil {
 		return nil, errors.New("canonicalizer is nil")
 	}
-	canonicalizerElelement, err := xml.canonicalizer.GetXml()
+	err := xml.canonicalizer.WriteXml(el)
 	if err != nil {
 		return nil, err
 	}
-	el.AddChild(canonicalizerElelement)
 
 	return el, nil
 }

@@ -47,7 +47,7 @@ func (can *c14N10ExcCanonicalizer) Canonicalize(ctx context.Context, el *etree.E
 	return canonicalized, nil
 }
 
-func (can *c14N10ExcCanonicalizer) LoadXml(el *etree.Element) error {
+func (can *c14N10ExcCanonicalizer) ReadXml(el *etree.Element) error {
 	// Get the exclusive c14n prefix list
 	exclusiveNamespaceElements := el.SelectElements("InclusiveNamespaces")
 	if len(exclusiveNamespaceElements) > 1 {
@@ -60,12 +60,13 @@ func (can *c14N10ExcCanonicalizer) LoadXml(el *etree.Element) error {
 	return nil
 }
 
-func (can *c14N10ExcCanonicalizer) GetXml() (*etree.Element, error) {
-	el := etree.NewElement("InclusiveNamespaces")
-	el.CreateAttr("xmlns", C14N10ExcNamespaceUri)
-	el.CreateAttr("PrefixList", can.prefixList)
+func (can *c14N10ExcCanonicalizer) WriteXml(el *etree.Element) error {
+	inclusiveNamespacesElement := etree.NewElement("InclusiveNamespaces")
+	inclusiveNamespacesElement.CreateAttr("xmlns", C14N10ExcNamespaceUri)
+	inclusiveNamespacesElement.CreateAttr("PrefixList", can.prefixList)
+	el.AddChild(inclusiveNamespacesElement)
 
-	return el, nil
+	return nil
 }
 
 func (can *c14N10ExcCanonicalizer) makeInternalCanonicalizer(prefixList string) rhdsig.Canonicalizer {

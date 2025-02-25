@@ -64,6 +64,10 @@ func (xml *Transform) loadXml(el *etree.Element) error {
 	if err != nil {
 		return err
 	}
+	err = xml.transformMethod.ReadXml(el)
+	if err != nil {
+		return err
+	}
 
 	xml.cachedXml = el
 	return nil
@@ -85,12 +89,9 @@ func (xml *Transform) getXml() (*etree.Element, error) {
 	if err != nil {
 		return nil, err
 	}
-	otherElement, err := xml.transformMethod.GetXml()
+	err = xml.transformMethod.WriteXml(el)
 	if err != nil {
 		return nil, err
-	}
-	if otherElement != nil {
-		el.AddChild(otherElement)
 	}
 
 	return el, nil

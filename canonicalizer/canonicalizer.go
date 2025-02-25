@@ -32,25 +32,18 @@ var (
 type Canonicalizer interface {
 	GetAlgorithm() string
 	Canonicalize(ctx context.Context, el *etree.Element) ([]byte, error)
-	LoadXml(el *etree.Element) error
-	GetXml() (*etree.Element, error)
+	ReadXml(el *etree.Element) error
+	WriteXml(el *etree.Element) error
 }
 
 func RegisterCanonicalizer(uri string, method CreateCanonicalizerMethod) {
 	registeredCanonicalizers[uri] = method
 }
 
-func GetCanonicalizer(uri string) (Canonicalizer, error) {
-	if method, ok := registeredCanonicalizers[uri]; ok {
-		return method(), nil
-	}
-	return nil, fmt.Errorf("no canonicalizer registered for URI: %s", uri)
-}
-
-func loadCanonicalizer(uri string, el *etree.Element) (Canonicalizer, error) {
+func LoadCanonicalizer(uri string, el *etree.Element) (Canonicalizer, error) {
 	if method, ok := registeredCanonicalizers[uri]; ok {
 		m := method()
-		err := m.LoadXml(el)
+		err := m.ReadXml(el)
 		if err != nil {
 			return nil, err
 		}

@@ -46,12 +46,12 @@ func (t *envelopedSignatureTransform) TransformData(ctx context.Context, data []
 	return nil, errors.New("enveloped signature transform cannot be applied to data")
 }
 
-func (t *envelopedSignatureTransform) LoadXml(el *etree.Element) error {
+func (t *envelopedSignatureTransform) ReadXml(el *etree.Element) error {
 	return nil
 }
 
-func (t *envelopedSignatureTransform) GetXml() (*etree.Element, error) {
-	return nil, nil
+func (t *envelopedSignatureTransform) WriteXml(el *etree.Element) error {
+	return nil
 }
 
 func (t *envelopedSignatureTransform) mapPathToElement(tree, el *etree.Element) []int {

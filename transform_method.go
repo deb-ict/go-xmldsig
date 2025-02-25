@@ -14,8 +14,8 @@ type TransformMethod interface {
 	GetReference() *Reference
 	TransformXmlElement(ctx context.Context, el *etree.Element) ([]byte, error)
 	TransformData(ctx context.Context, data []byte) ([]byte, error)
-	LoadXml(el *etree.Element) error
-	GetXml() (*etree.Element, error)
+	ReadXml(el *etree.Element) error
+	WriteXml(el *etree.Element) error
 }
 
 func RegisterTransform(uri string, method CreateTransformMethod) {
