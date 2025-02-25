@@ -1,4 +1,4 @@
-package xmldsig
+package transform
 
 import (
 	"context"
@@ -11,29 +11,22 @@ import (
 
 type c14N10ExcTransform struct {
 	canonicalizer canonicalizer.Canonicalizer
-	reference     *Reference
 }
 
-func NewC14N10ExcTransform(reference *Reference) TransformMethod {
+func NewC14N10ExcTransform() TransformMethod {
 	return &c14N10ExcTransform{
 		canonicalizer: canonicalizer.NewC14N10ExcCanonicalizer(),
-		reference:     reference,
 	}
 }
 
-func NewC14N10ExcWithCommentsTransform(reference *Reference) TransformMethod {
+func NewC14N10ExcWithCommentsTransform() TransformMethod {
 	return &c14N10ExcTransform{
 		canonicalizer: canonicalizer.NewC14N10ExcWithCommentsCanonicalizer(),
-		reference:     reference,
 	}
 }
 
 func (t *c14N10ExcTransform) GetAlgorithm() string {
 	return t.canonicalizer.GetAlgorithm()
-}
-
-func (t *c14N10ExcTransform) GetReference() *Reference {
-	return t.reference
 }
 
 func (t *c14N10ExcTransform) TransformXmlElement(ctx context.Context, el *etree.Element) ([]byte, error) {
@@ -54,11 +47,6 @@ func (t *c14N10ExcTransform) TransformData(ctx context.Context, data []byte) ([]
 }
 
 func (t *c14N10ExcTransform) ReadXml(el *etree.Element) error {
-	err := validateElement(el, "Transform", XmlDSigNamespaceUri)
-	if err != nil {
-		return err
-	}
-
 	t.canonicalizer.ReadXml(el)
 
 	return nil

@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/beevik/etree"
-	"github.com/deb-ict/go-xmldsig/canonicalizer"
 )
 
 const (
@@ -19,15 +18,6 @@ var (
 )
 
 var (
-	registeredTransforms map[string]CreateTransformMethod = map[string]CreateTransformMethod{
-		EnvelopedSignatureTransform:                     NewEnvelopedSignatureTransform,
-		canonicalizer.C14N10RecNamespaceUri:             NewC14N10RecTransform,
-		canonicalizer.C14N10RecWithCommentsNamespaceUri: NewC14N10RecWithCommentsTransform,
-		canonicalizer.C14N10ExcNamespaceUri:             NewC14N10ExcTransform,
-		canonicalizer.C14N10ExcWithCommentsNamespaceUri: NewC14N10ExcWithCommentsTransform,
-		canonicalizer.C14N11NamespaceUri:                NewC14N11Transform,
-		canonicalizer.C14N11WithCommentsNamespaceUri:    NewC14N11WithCommentsTransform,
-	}
 	referenceElementResolvers map[string]ResolveReferenceMethod = map[string]ResolveReferenceMethod{}
 )
 

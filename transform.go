@@ -5,6 +5,7 @@ import (
 
 	"github.com/beevik/etree"
 	"github.com/deb-ict/go-xml"
+	"github.com/deb-ict/go-xmldsig/transform"
 )
 
 type Transform struct {
@@ -15,7 +16,7 @@ type Transform struct {
 	Other           []any       `xml:",any"`
 	transforms      *Transforms
 	cachedXml       *etree.Element
-	transformMethod TransformMethod
+	transformMethod transform.TransformMethod
 }
 
 func newTransform(transforms *Transforms) *Transform {
@@ -99,7 +100,7 @@ func (xml *Transform) getXml() (*etree.Element, error) {
 
 func (xml *Transform) ensureTransformMethod() error {
 	if xml.transformMethod == nil {
-		transformMethod, err := GetTransform(xml.Algorithm, xml.transforms.reference)
+		transformMethod, err := transform.GetTransform(xml.Algorithm)
 		if err != nil {
 			return err
 		}

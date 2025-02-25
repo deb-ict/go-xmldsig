@@ -160,9 +160,6 @@ func (xml *Reference) loadXml(el *etree.Element) error {
 		return err
 	}
 	xml.DigestValue = digestValueElement.Text()
-	if err != nil {
-		return err
-	}
 
 	xml.cachedXml = el
 	return nil

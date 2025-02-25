@@ -1,4 +1,4 @@
-package xmldsig
+package transform
 
 import (
 	"context"
@@ -8,30 +8,23 @@ import (
 	rhdsig "github.com/russellhaering/goxmldsig"
 )
 
-const (
-	EnvelopedSignatureTransform string = "http://www.w3.org/2000/09/xmldsig#enveloped-signature"
-)
-
 type envelopedSignatureTransform struct {
-	reference *Reference
 }
 
-func NewEnvelopedSignatureTransform(reference *Reference) TransformMethod {
-	return &envelopedSignatureTransform{
-		reference: reference,
-	}
+func NewEnvelopedSignatureTransform() TransformMethod {
+	return &envelopedSignatureTransform{}
 }
 
 func (t *envelopedSignatureTransform) GetAlgorithm() string {
 	return EnvelopedSignatureTransform
 }
 
-func (t *envelopedSignatureTransform) GetReference() *Reference {
-	return t.reference
-}
-
 func (t *envelopedSignatureTransform) TransformXmlElement(ctx context.Context, el *etree.Element) ([]byte, error) {
-	signaturePath := t.mapPathToElement(el, t.reference.signedInfo.signature.cachedXml)
+	signatureElement, err := t.findParentElement(el, "Signature", "http://www.w3.org/2000/09/xmldsig#")
+	if err != nil {
+		return nil, errors.New("Error applying canonicalization transform: Signature not found")
+	}
+	signaturePath := t.mapPathToElement(el, signatureElement)
 
 	el = el.Copy()
 	if !t.removeElementAtPath(el, signaturePath) {
@@ -52,6 +45,23 @@ func (t *envelopedSignatureTransform) ReadXml(el *etree.Element) error {
 
 func (t *envelopedSignatureTransform) WriteXml(el *etree.Element) error {
 	return nil
+}
+
+func (t *envelopedSignatureTransform) findParentElement(el *etree.Element, tag, namespaceUri string) (*etree.Element, error) {
+	if el == nil {
+		return nil, errors.New("Element not found")
+	}
+
+	if el.Tag == tag && el.NamespaceURI() == namespaceUri {
+		return el, nil
+	}
+
+	parent := el.Parent()
+	if parent != nil {
+		return t.findParentElement(parent, tag, namespaceUri)
+	}
+
+	return nil, errors.New("Element not found")
 }
 
 func (t *envelopedSignatureTransform) mapPathToElement(tree, el *etree.Element) []int {
