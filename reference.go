@@ -8,14 +8,19 @@ import (
 	"strings"
 
 	"github.com/beevik/etree"
+	"github.com/deb-ict/go-xml"
 )
 
 type Reference struct {
+	XMLName      xml.Name      `xml:"http://www.w3.org/2000/09/xmldsig# Reference"`
+	Attrs        []*xml.Attr   `xml:",any,attr"`
+	Id           string        `xml:"Id,attr,omitempty"`
+	Uri          string        `xml:"URI,attr,omitempty"`
+	Type         string        `xml:"Type,attr,omitempty"`
+	Transforms   *Transforms   `xml:"http://www.w3.org/2000/09/xmldsig# Transforms,omitempty"`
+	DigestMethod *DigestMethod `xml:"http://www.w3.org/2000/09/xmldsig# DigestMethod"`
+	DigestValue  string        `xml:"http://www.w3.org/2000/09/xmldsig# DigestValue"`
 	signedInfo   *SignedInfo
-	uri          string
-	digestMethod DigestMethod
-	digestValue  []byte
-	transforms   []Transform
 	cachedXml    *etree.Element
 }
 
@@ -25,88 +30,87 @@ func newReference(signedInfo *SignedInfo) *Reference {
 	}
 }
 
-func (ref *Reference) GetUri() string {
-	return ref.uri
-}
-
-func (ref *Reference) GetUriWithoutPrefix(prefix string) string {
-	if strings.HasPrefix(ref.uri, prefix) {
-		return ref.uri[len(prefix):]
+func (xml *Reference) GetUriWithoutPrefix(prefix string) string {
+	if strings.HasPrefix(xml.Uri, prefix) {
+		return xml.Uri[len(prefix):]
 	}
-	return ref.uri
+	return xml.Uri
 }
 
-func (ref *Reference) root() *SignedXml {
-	return ref.signedInfo.root()
+func (xml *Reference) root() *SignedXml {
+	return xml.signedInfo.root()
 }
 
-func (ref *Reference) validateDigest(ctx context.Context) error {
-	if ref.uri == "" || strings.HasPrefix(ref.uri, "#") {
+func (xml *Reference) validateDigest(ctx context.Context) error {
+	digestBytes, err := base64.StdEncoding.DecodeString(xml.DigestValue)
+	if err != nil {
+		return err
+	}
+
+	if xml.Uri == "" || strings.HasPrefix(xml.Uri, "#") {
 		var element *etree.Element
-		if ref.uri == "" {
-			element = ref.root().document.Root()
+		if xml.Uri == "" {
+			element = xml.root().document.Root()
 		} else {
-			elementId := ref.uri[1:]
-			element = ref.root().document.FindElement("//*[@Id='" + elementId + "']")
+			elementId := xml.Uri[1:]
+			element = xml.root().document.FindElement("//*[@Id='" + elementId + "']")
 		}
 		if element == nil {
 			return errors.New("element not found")
 		}
 
 		// Apply the transforms
-		var transformedData []byte
-		var transformError error
-		for _, transform := range ref.transforms {
-			if transformedData == nil {
-				transformedData, transformError = transform.TransformXmlElement(ctx, element)
-			} else {
-				transformedData, transformError = transform.TransformData(ctx, transformedData)
-			}
-			if transformError != nil {
-				return transformError
-			}
-		}
-
-		// Calculate the digest
-		digestMethod, err := ref.digestMethod.CreateHashAlgorithm()
+		data, err := xml.Transforms.transformXmlElement(ctx, element)
 		if err != nil {
 			return err
 		}
-		digestMethod.Write(transformedData)
-		digestValue := digestMethod.Sum(nil)
-		if CryptographicEquals(digestValue, ref.digestValue) {
+
+		// Calculate the digest
+		digestMethod, err := GetDigestMethod(xml.DigestMethod.Algorithm)
+		if err != nil {
+			return err
+		}
+		digestAlgorithm, err := digestMethod.CreateHashAlgorithm()
+		if err != nil {
+			return err
+		}
+		digestAlgorithm.Write(data)
+		digestValue := digestAlgorithm.Sum(nil)
+		if CryptographicEquals(digestValue, digestBytes) {
 			return nil
 		}
 	} else {
 		prefixes := GetReferenceResolverPrefixes()
 		for _, prefix := range prefixes {
-			if strings.HasPrefix(ref.uri, prefix) {
+			if strings.HasPrefix(xml.Uri, prefix) {
 				if method, ok := GetReferenceElementResolver(prefix); ok {
-					reader, err := method(ctx, ref)
+					reader, err := method(ctx, xml)
 					if err != nil {
 						return err
 					}
 
 					// Apply the transforms
-					transformedData, transformError := io.ReadAll(reader)
-					if transformError != nil {
-						return transformError
-					}
-					for _, transform := range ref.transforms {
-						transformedData, transformError = transform.TransformData(ctx, transformedData)
-						if transformError != nil {
-							return transformError
-						}
-					}
-
-					// Calculate the digest
-					digestMethod, err := ref.digestMethod.CreateHashAlgorithm()
+					data, err := io.ReadAll(reader)
 					if err != nil {
 						return err
 					}
-					digestMethod.Write(transformedData)
-					digestValue := digestMethod.Sum(nil)
-					if CryptographicEquals(digestValue, ref.digestValue) {
+					data, err = xml.Transforms.transformData(ctx, data)
+					if err != nil {
+						return err
+					}
+
+					// Calculate the digest
+					digestMethod, err := GetDigestMethod(xml.DigestMethod.Algorithm)
+					if err != nil {
+						return err
+					}
+					digestAlgorithm, err := digestMethod.CreateHashAlgorithm()
+					if err != nil {
+						return err
+					}
+					digestAlgorithm.Write(data)
+					digestValue := digestAlgorithm.Sum(nil)
+					if CryptographicEquals(digestValue, digestBytes) {
 						return nil
 					}
 				}
@@ -117,64 +121,94 @@ func (ref *Reference) validateDigest(ctx context.Context) error {
 	return errors.New("digest validation failed")
 }
 
-func (ref *Reference) loadXml(el *etree.Element) error {
-	var err error
-
-	if el == nil {
-		return errors.New("element cannot be nil")
-	}
-	if el.Tag != "Reference" || el.NamespaceURI() != XmlDSigNamespaceUri {
-		return errors.New("element is not a reference element")
+func (xml *Reference) loadXml(el *etree.Element) error {
+	err := validateElement(el, "Reference", XmlDSigNamespaceUri)
+	if err != nil {
+		return err
 	}
 
 	// Get the reference attributes
-	ref.uri = el.SelectAttrValue("URI", "")
+	xml.Id = el.SelectAttrValue("Id", "")
+	xml.Uri = el.SelectAttrValue("URI", "")
+	xml.Type = el.SelectAttrValue("Type", "")
 
 	// Get the transform list element
-	transformsElement := el.SelectElements("Transforms")
-	if len(transformsElement) != 1 {
-		return errors.New("element does not contain a single Transforms element")
+	transformsElement, err := getOptionalSingleChildElement(el, "Transforms", XmlDSigNamespaceUri)
+	if err != nil {
+		return err
 	}
-
-	// Get the transforms
-	transformElements := transformsElement[0].SelectElements("Transform")
-	for _, transformElement := range transformElements {
-		algorithm := transformElement.SelectAttrValue("Algorithm", "")
-
-		// Create the transform
-		transform, err := GetTransform(algorithm, ref)
-		if err != nil {
-			return err
-		}
-		err = transform.LoadXml(transformElement)
-		if err != nil {
-			return err
-		}
-		ref.transforms = append(ref.transforms, transform)
+	xml.Transforms = newTransforms(xml)
+	err = xml.Transforms.loadXml(transformsElement)
+	if err != nil {
+		return err
 	}
 
 	// Get the digest method
-	digestMethodElements := el.SelectElements("DigestMethod")
-	if len(digestMethodElements) != 1 {
-		return errors.New("element does not contain a single DigestMethod element")
-	}
-	digestMethodAlgorithm := digestMethodElements[0].SelectAttrValue("Algorithm", "")
-	digestMethod, err := GetDigestMethod(digestMethodAlgorithm)
+	digestMethodElement, err := getSingleChildElement(el, "DigestMethod", XmlDSigNamespaceUri)
 	if err != nil {
 		return err
 	}
-	ref.digestMethod = digestMethod
+	xml.DigestMethod = newDigestMethod(xml)
+	err = xml.DigestMethod.loadXml(digestMethodElement)
+	if err != nil {
+		return err
+	}
 
 	// Get the digest value
-	digestValueElements := el.SelectElements("DigestValue")
-	if len(digestValueElements) != 1 {
-		return errors.New("element does not contain a single DigestValue element")
+	digestValueElement, err := getSingleChildElement(el, "DigestValue", XmlDSigNamespaceUri)
+	if err != nil {
+		return err
 	}
-	ref.digestValue, err = base64.StdEncoding.DecodeString(digestValueElements[0].Text())
+	xml.DigestValue = digestValueElement.Text()
 	if err != nil {
 		return err
 	}
 
-	ref.cachedXml = el
+	xml.cachedXml = el
 	return nil
+}
+
+func (xml *Reference) getXml() (*etree.Element, error) {
+	el := etree.NewElement("Reference")
+	el.Space = xml.root().getElementSpace(XmlDSigNamespaceUri)
+
+	// Write the reference attributes
+	if xml.Id != "" {
+		el.CreateAttr("Id", xml.Id)
+	}
+	if xml.Uri != "" {
+		el.CreateAttr("URI", xml.Uri)
+	}
+	if xml.Type != "" {
+		el.CreateAttr("Type", xml.Type)
+	}
+
+	// Write the transform list
+	if xml.Transforms != nil {
+		transformElement, err := xml.Transforms.getXml()
+		if err != nil {
+			return nil, err
+		}
+		el.AddChild(transformElement)
+	}
+
+	// Write the digest method
+	if xml.DigestMethod == nil {
+		return nil, errors.New("reference does not contain a DigestMethod element")
+	}
+	digestMethodElement, err := xml.DigestMethod.getXml()
+	if err != nil {
+		return nil, err
+	}
+	el.AddChild(digestMethodElement)
+
+	// Write the digest value
+	if xml.DigestValue == "" {
+		return nil, errors.New("reference does not contain a DigestValue element")
+	}
+	digestValueElement := etree.NewElement("DigestValue")
+	digestValueElement.SetText(xml.DigestValue)
+	el.AddChild(digestValueElement)
+
+	return el, nil
 }

@@ -50,6 +50,10 @@ func (can *c14N11Canonicalizer) LoadXml(el *etree.Element) error {
 	return nil
 }
 
+func (can *c14N11Canonicalizer) GetXml() (*etree.Element, error) {
+	return nil, nil
+}
+
 func (can *c14N11Canonicalizer) makeInternalCanonicalizer() rhdsig.Canonicalizer {
 	if can.comments {
 		return rhdsig.MakeC14N11WithCommentsCanonicalizer()

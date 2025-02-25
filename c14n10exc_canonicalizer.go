@@ -65,6 +65,14 @@ func (can *c14N10ExcCanonicalizer) LoadXml(el *etree.Element) error {
 	return nil
 }
 
+func (can *c14N10ExcCanonicalizer) GetXml() (*etree.Element, error) {
+	el := etree.NewElement("InclusiveNamespaces")
+	el.CreateAttr("xmlns", C14N10ExcNamespaceUri)
+	el.CreateAttr("PrefixList", can.prefixList)
+
+	return el, nil
+}
+
 func (can *c14N10ExcCanonicalizer) makeInternalCanonicalizer(prefixList string) rhdsig.Canonicalizer {
 	if can.comments {
 		return rhdsig.MakeC14N10ExclusiveWithCommentsCanonicalizerWithPrefixList(prefixList)

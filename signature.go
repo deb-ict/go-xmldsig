@@ -1,6 +1,8 @@
 package xmldsig
 
 import (
+	"errors"
+
 	"github.com/beevik/etree"
 	"github.com/deb-ict/go-xml"
 )
@@ -74,18 +76,24 @@ func (xml *Signature) getXml() (*etree.Element, error) {
 	}
 
 	// Add the signed info
-	signedInfoEl, err := xml.SignedInfo.getXml()
+	if xml.SignedInfo == nil {
+		return nil, errors.New("signature does not contain a SignedInfo element")
+	}
+	signedInfoElement, err := xml.SignedInfo.getXml()
 	if err != nil {
 		return nil, err
 	}
-	el.AddChild(signedInfoEl)
+	el.AddChild(signedInfoElement)
 
 	// Add the signature value
-	signatureValueEl, err := xml.SignatureValue.getXml()
+	if xml.SignatureValue == nil {
+		return nil, errors.New("signature does not contain a SignatureValue element")
+	}
+	signatureValueElement, err := xml.SignatureValue.getXml()
 	if err != nil {
 		return nil, err
 	}
-	el.AddChild(signatureValueEl)
+	el.AddChild(signatureValueElement)
 
 	// Add the key info
 	//TODO: KeyInfo

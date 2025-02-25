@@ -16,7 +16,7 @@ type envelopedSignatureTransform struct {
 	reference *Reference
 }
 
-func NewEnvelopedSignatureTransform(reference *Reference) Transform {
+func NewEnvelopedSignatureTransform(reference *Reference) TransformMethod {
 	return &envelopedSignatureTransform{
 		reference: reference,
 	}
@@ -28,10 +28,6 @@ func (t *envelopedSignatureTransform) GetAlgorithm() string {
 
 func (t *envelopedSignatureTransform) GetReference() *Reference {
 	return t.reference
-}
-
-func (t *envelopedSignatureTransform) LoadXml(el *etree.Element) error {
-	return nil
 }
 
 func (t *envelopedSignatureTransform) TransformXmlElement(ctx context.Context, el *etree.Element) ([]byte, error) {
@@ -48,6 +44,14 @@ func (t *envelopedSignatureTransform) TransformXmlElement(ctx context.Context, e
 
 func (t *envelopedSignatureTransform) TransformData(ctx context.Context, data []byte) ([]byte, error) {
 	return nil, errors.New("enveloped signature transform cannot be applied to data")
+}
+
+func (t *envelopedSignatureTransform) LoadXml(el *etree.Element) error {
+	return nil
+}
+
+func (t *envelopedSignatureTransform) GetXml() (*etree.Element, error) {
+	return nil, nil
 }
 
 func (t *envelopedSignatureTransform) mapPathToElement(tree, el *etree.Element) []int {

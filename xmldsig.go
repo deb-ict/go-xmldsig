@@ -69,3 +69,14 @@ func getSingleChildElement(el *etree.Element, tag string, namespaceUri string) (
 	}
 	return elements[0], nil
 }
+
+func getOptionalSingleChildElement(el *etree.Element, tag string, namespaceUri string) (*etree.Element, error) {
+	elements := el.SelectElements(tag)
+	if len(elements) > 1 {
+		return nil, NewMultipleChildElementsFoundError(el, tag, namespaceUri)
+	}
+	if len(elements) > 0 {
+		return elements[0], nil
+	}
+	return nil, nil
+}

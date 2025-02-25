@@ -13,7 +13,7 @@ type c14N10RecTransform struct {
 	reference     *Reference
 }
 
-func NewC14N10RecTransform(reference *Reference) Transform {
+func NewC14N10RecTransform(reference *Reference) TransformMethod {
 	return &c14N10RecTransform{
 		canonicalizer: &c14N10RecCanonicalizer{
 			comments: false,
@@ -22,7 +22,7 @@ func NewC14N10RecTransform(reference *Reference) Transform {
 	}
 }
 
-func NewC14N10RecWithCommentsTransform(reference *Reference) Transform {
+func NewC14N10RecWithCommentsTransform(reference *Reference) TransformMethod {
 	return &c14N10RecTransform{
 		canonicalizer: &c14N10RecCanonicalizer{
 			comments: true,
@@ -66,4 +66,8 @@ func (t *c14N10RecTransform) LoadXml(el *etree.Element) error {
 	t.canonicalizer.LoadXml(el)
 
 	return nil
+}
+
+func (t *c14N10RecTransform) GetXml() (*etree.Element, error) {
+	return t.canonicalizer.GetXml()
 }

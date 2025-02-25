@@ -13,7 +13,7 @@ type c14N10ExcTransform struct {
 	reference     *Reference
 }
 
-func NewC14N10ExcTransform(reference *Reference) Transform {
+func NewC14N10ExcTransform(reference *Reference) TransformMethod {
 	return &c14N10ExcTransform{
 		canonicalizer: &c14N10ExcCanonicalizer{
 			comments: false,
@@ -22,7 +22,7 @@ func NewC14N10ExcTransform(reference *Reference) Transform {
 	}
 }
 
-func NewC14N10ExcWithCommentsTransform(reference *Reference) Transform {
+func NewC14N10ExcWithCommentsTransform(reference *Reference) TransformMethod {
 	return &c14N10ExcTransform{
 		canonicalizer: &c14N10ExcCanonicalizer{
 			comments: true,
@@ -57,13 +57,16 @@ func (t *c14N10ExcTransform) TransformData(ctx context.Context, data []byte) ([]
 }
 
 func (t *c14N10ExcTransform) LoadXml(el *etree.Element) error {
-	if el == nil {
-		return errors.New("element cannot be nil")
+	err := validateElement(el, "Transform", XmlDSigNamespaceUri)
+	if err != nil {
+		return err
 	}
-	if el.Tag != "Transform" || el.NamespaceURI() != XmlDSigNamespaceUri {
-		return errors.New("element is not a transform element")
-	}
+
 	t.canonicalizer.LoadXml(el)
 
 	return nil
+}
+
+func (t *c14N10ExcTransform) GetXml() (*etree.Element, error) {
+	return t.canonicalizer.GetXml()
 }

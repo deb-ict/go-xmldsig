@@ -13,7 +13,7 @@ type c14N11Transform struct {
 	reference     *Reference
 }
 
-func NewC14N11Transform(reference *Reference) Transform {
+func NewC14N11Transform(reference *Reference) TransformMethod {
 	return &c14N11Transform{
 		canonicalizer: &c14N11Canonicalizer{
 			comments: false,
@@ -22,7 +22,7 @@ func NewC14N11Transform(reference *Reference) Transform {
 	}
 }
 
-func NewC14N11WithCommentsTransform(reference *Reference) Transform {
+func NewC14N11WithCommentsTransform(reference *Reference) TransformMethod {
 	return &c14N11Transform{
 		canonicalizer: &c14N11Canonicalizer{
 			comments: true,
@@ -66,4 +66,8 @@ func (t *c14N11Transform) LoadXml(el *etree.Element) error {
 	t.canonicalizer.LoadXml(el)
 
 	return nil
+}
+
+func (t *c14N11Transform) GetXml() (*etree.Element, error) {
+	return t.canonicalizer.GetXml()
 }
