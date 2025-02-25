@@ -4,15 +4,11 @@ import (
 	"strconv"
 
 	"github.com/beevik/etree"
-	"github.com/deb-ict/go-xml"
 )
 
 type SignatureMethod struct {
-	XMLName          xml.Name    `xml:"http://www.w3.org/2000/09/xmldsig# SignatureMethod"`
-	Attrs            []*xml.Attr `xml:",any,attr"`
-	Algorithm        string      `xml:"Algorithm,attr"`
-	HMACOutputLength int         `xml:"http://www.w3.org/2000/09/xmldsig# HMACOutputLength,omitempty"`
-	Content          []any       `xml:",any"`
+	Algorithm        string
+	HMACOutputLength int
 	signedInfo       *SignedInfo
 	cachedXml        *etree.Element
 }

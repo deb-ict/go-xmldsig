@@ -4,19 +4,14 @@ import (
 	"errors"
 
 	"github.com/beevik/etree"
-	"github.com/deb-ict/go-xml"
 )
 
 type Signature struct {
-	XMLName        xml.Name        `xml:"http://www.w3.org/2000/09/xmldsig# Signature"`
-	Attrs          []*xml.Attr     `xml:",any,attr"`
-	Id             string          `xml:"Id,attr,omitempty"`
-	SignedInfo     *SignedInfo     `xml:"http://www.w3.org/2000/09/xmldsig# SignedInfo"`
-	SignatureValue *SignatureValue `xml:"http://www.w3.org/2000/09/xmldsig# SignatureValue"`
-	//KeyInfo        *KeyInfo        `xml:"http://www.w3.org/2000/09/xmldsig# KeyInfo,omitempty"`
-	//Object         []*Object       `xml:"http://www.w3.org/2000/09/xmldsig# Object,omitempty"`
-	signedXml *SignedXml
-	cachedXml *etree.Element
+	Id             string
+	SignedInfo     *SignedInfo
+	SignatureValue *SignatureValue
+	signedXml      *SignedXml
+	cachedXml      *etree.Element
 }
 
 func newSignature(signedXml *SignedXml) *Signature {

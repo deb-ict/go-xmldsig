@@ -7,17 +7,14 @@ import (
 	"errors"
 
 	"github.com/beevik/etree"
-	"github.com/deb-ict/go-xml"
 	rhtree "github.com/russellhaering/goxmldsig/etreeutils"
 )
 
 type SignedInfo struct {
-	XMLName                xml.Name                `xml:"http://www.w3.org/2000/09/xmldsig# SignedInfo"`
-	Attrs                  []*xml.Attr             `xml:",any,attr"`
-	Id                     string                  `xml:"Id,attr,omitempty"`
-	CanonicalizationMethod *CanonicalizationMethod `xml:"http://www.w3.org/2000/09/xmldsig# CanonicalizationMethod"`
-	SignatureMethod        *SignatureMethod        `xml:"http://www.w3.org/2000/09/xmldsig# SignatureMethod"`
-	References             []*Reference            `xml:"http://www.w3.org/2000/09/xmldsig# Reference"`
+	Id                     string
+	CanonicalizationMethod *CanonicalizationMethod
+	SignatureMethod        *SignatureMethod
+	References             []*Reference
 	signature              *Signature
 	cachedXml              *etree.Element
 }

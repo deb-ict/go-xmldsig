@@ -4,16 +4,12 @@ import (
 	"context"
 
 	"github.com/beevik/etree"
-	"github.com/deb-ict/go-xml"
 	"github.com/deb-ict/go-xmldsig/transform"
 )
 
 type Transform struct {
-	XMLName         xml.Name    `xml:"http://www.w3.org/2000/09/xmldsig# Transform"`
-	Attrs           []*xml.Attr `xml:",any,attr"`
-	Algorithm       string      `xml:"Algorithm,attr"`
-	XPath           string      `xml:"http://www.w3.org/2000/09/xmldsig# XPath,omitempty"`
-	Other           []any       `xml:",any"`
+	Algorithm       string
+	XPath           string
 	transforms      *Transforms
 	cachedXml       *etree.Element
 	transformMethod transform.TransformMethod

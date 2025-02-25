@@ -2,14 +2,10 @@ package xmldsig
 
 import (
 	"github.com/beevik/etree"
-	"github.com/deb-ict/go-xml"
 )
 
 type DigestMethod struct {
-	XMLName   xml.Name    `xml:"http://www.w3.org/2000/09/xmldsig# DigestMethod"`
-	Attrs     []*xml.Attr `xml:",any,attr"`
-	Algorithm string      `xml:"Algorithm,attr"`
-	Content   []any       `xml:",any"`
+	Algorithm string
 	reference *Reference
 	cachedXml *etree.Element
 }

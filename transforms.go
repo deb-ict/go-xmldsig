@@ -4,13 +4,10 @@ import (
 	"context"
 
 	"github.com/beevik/etree"
-	"github.com/deb-ict/go-xml"
 )
 
 type Transforms struct {
-	XMLName    xml.Name     `xml:"http://www.w3.org/2000/09/xmldsig# Transforms"`
-	Attrs      []*xml.Attr  `xml:",any,attr"`
-	Transforms []*Transform `xml:"http://www.w3.org/2000/09/xmldsig# Transform"`
+	Transforms []*Transform
 	reference  *Reference
 	cachedXml  *etree.Element
 }

@@ -4,15 +4,11 @@ import (
 	"errors"
 
 	"github.com/beevik/etree"
-	"github.com/deb-ict/go-xml"
 	"github.com/deb-ict/go-xmldsig/canonicalizer"
 )
 
 type CanonicalizationMethod struct {
-	XMLName       xml.Name    `xml:"http://www.w3.org/2000/09/xmldsig# CanonicalizationMethod"`
-	Attrs         []*xml.Attr `xml:",any,attr"`
-	Algorithm     string      `xml:"Algorithm,attr"`
-	Content       []any       `xml:",any"`
+	Algorithm     string
 	signedInfo    *SignedInfo
 	cachedXml     *etree.Element
 	canonicalizer canonicalizer.Canonicalizer

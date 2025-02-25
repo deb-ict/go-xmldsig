@@ -8,18 +8,15 @@ import (
 	"strings"
 
 	"github.com/beevik/etree"
-	"github.com/deb-ict/go-xml"
 )
 
 type Reference struct {
-	XMLName      xml.Name      `xml:"http://www.w3.org/2000/09/xmldsig# Reference"`
-	Attrs        []*xml.Attr   `xml:",any,attr"`
-	Id           string        `xml:"Id,attr,omitempty"`
-	Uri          string        `xml:"URI,attr,omitempty"`
-	Type         string        `xml:"Type,attr,omitempty"`
-	Transforms   *Transforms   `xml:"http://www.w3.org/2000/09/xmldsig# Transforms,omitempty"`
-	DigestMethod *DigestMethod `xml:"http://www.w3.org/2000/09/xmldsig# DigestMethod"`
-	DigestValue  string        `xml:"http://www.w3.org/2000/09/xmldsig# DigestValue"`
+	Id           string
+	Uri          string
+	Type         string
+	Transforms   *Transforms
+	DigestMethod *DigestMethod
+	DigestValue  string
 	signedInfo   *SignedInfo
 	cachedXml    *etree.Element
 }
