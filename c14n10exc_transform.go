@@ -5,29 +5,26 @@ import (
 	"errors"
 
 	"github.com/beevik/etree"
+	"github.com/deb-ict/go-xmldsig/canonicalizer"
 	rhtree "github.com/russellhaering/goxmldsig/etreeutils"
 )
 
 type c14N10ExcTransform struct {
-	canonicalizer *c14N10ExcCanonicalizer
+	canonicalizer canonicalizer.Canonicalizer
 	reference     *Reference
 }
 
 func NewC14N10ExcTransform(reference *Reference) TransformMethod {
 	return &c14N10ExcTransform{
-		canonicalizer: &c14N10ExcCanonicalizer{
-			comments: false,
-		},
-		reference: reference,
+		canonicalizer: canonicalizer.NewC14N10ExcCanonicalizer(),
+		reference:     reference,
 	}
 }
 
 func NewC14N10ExcWithCommentsTransform(reference *Reference) TransformMethod {
 	return &c14N10ExcTransform{
-		canonicalizer: &c14N10ExcCanonicalizer{
-			comments: true,
-		},
-		reference: reference,
+		canonicalizer: canonicalizer.NewC14N10ExcWithCommentsCanonicalizer(),
+		reference:     reference,
 	}
 }
 

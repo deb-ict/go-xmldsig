@@ -1,15 +1,10 @@
-package xmldsig
+package canonicalizer
 
 import (
 	"context"
 
 	"github.com/beevik/etree"
 	rhdsig "github.com/russellhaering/goxmldsig"
-)
-
-const (
-	C14N11NamespaceUri             string = "http://www.w3.org/2006/12/xml-c14n11"
-	C14N11WithCommentsNamespaceUri string = "http://www.w3.org/2006/12/xml-c14n11#WithComments"
 )
 
 type c14N11Canonicalizer struct {

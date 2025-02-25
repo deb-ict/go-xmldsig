@@ -54,11 +54,7 @@ func (xml *SignedInfo) validateSignature(ctx context.Context, cert *x509.Certifi
 		return err
 	}
 
-	canonicalizer, err := loadCanonicalizer(xml.CanonicalizationMethod.Algorithm, xml.CanonicalizationMethod.cachedXml)
-	if err != nil {
-		return err
-	}
-	canonicalizedData, err := canonicalizer.Canonicalize(ctx, detachtedElement)
+	canonicalizedData, err := xml.CanonicalizationMethod.canonicalizer.Canonicalize(ctx, detachtedElement)
 	if err != nil {
 		return err
 	}

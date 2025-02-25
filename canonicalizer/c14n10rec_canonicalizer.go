@@ -1,4 +1,4 @@
-package xmldsig
+package canonicalizer
 
 import (
 	"context"
@@ -6,11 +6,6 @@ import (
 	"github.com/beevik/etree"
 	rhdsig "github.com/russellhaering/goxmldsig"
 	rhtree "github.com/russellhaering/goxmldsig/etreeutils"
-)
-
-const (
-	C14N10RecNamespaceUri             string = "http://www.w3.org/TR/2001/REC-xml-c14n-20010315"
-	C14N10RecWithCommentsNamespaceUri string = "http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments"
 )
 
 type c14N10RecCanonicalizer struct {
