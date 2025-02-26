@@ -11,7 +11,7 @@ body:
     attributes:
       value: |
         **Thank you for taking the time to report a bug!**
-        If this is a security issue please see [SECURITY.md](../SECURITY.md) for more information.
+        If this is a security issue please see [SECURITY.md](SECURITY.md) for more information.
   
   - type: checkboxes
     attributes:
