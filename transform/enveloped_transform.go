@@ -20,8 +20,8 @@ func (t *envelopedSignatureTransform) GetAlgorithm() string {
 }
 
 func (t *envelopedSignatureTransform) TransformXmlElement(ctx context.Context, el *etree.Element) ([]byte, error) {
-	signatureElement, err := t.findParentElement(el, "Signature", "http://www.w3.org/2000/09/xmldsig#")
-	if err != nil {
+	signatureElement := el.FindElement("Signature[namespace-uri()='http://www.w3.org/2000/09/xmldsig#']")
+	if signatureElement == nil {
 		return nil, errors.New("Error applying canonicalization transform: Signature not found")
 	}
 	signaturePath := t.mapPathToElement(el, signatureElement)
