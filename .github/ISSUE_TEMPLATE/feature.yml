@@ -3,7 +3,7 @@ description: File a bug report
 title: "[FEATURE] "
 type: feature
 labels:
-  - kind/feature
+  - enhancement
 
 body:
   - type: markdown
