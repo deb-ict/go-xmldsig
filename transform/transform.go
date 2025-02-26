@@ -8,14 +8,14 @@ import (
 	"github.com/deb-ict/go-xmldsig/canonicalizer"
 )
 
-type CreateTransformMethod func() TransformMethod
+type CreateTransform func() Transform
 
 const (
 	EnvelopedSignatureTransform string = "http://www.w3.org/2000/09/xmldsig#enveloped-signature"
 )
 
 var (
-	registeredTransforms map[string]CreateTransformMethod = map[string]CreateTransformMethod{
+	registeredTransforms map[string]CreateTransform = map[string]CreateTransform{
 		EnvelopedSignatureTransform:                     NewEnvelopedSignatureTransform,
 		canonicalizer.C14N10RecNamespaceUri:             NewC14N10RecTransform,
 		canonicalizer.C14N10RecWithCommentsNamespaceUri: NewC14N10RecWithCommentsTransform,
@@ -26,7 +26,7 @@ var (
 	}
 )
 
-type TransformMethod interface {
+type Transform interface {
 	GetAlgorithm() string
 	TransformXmlElement(ctx context.Context, el *etree.Element) ([]byte, error)
 	TransformData(ctx context.Context, data []byte) ([]byte, error)
@@ -34,11 +34,11 @@ type TransformMethod interface {
 	WriteXml(el *etree.Element) error
 }
 
-func RegisterTransform(uri string, method CreateTransformMethod) {
+func RegisterTransform(uri string, method CreateTransform) {
 	registeredTransforms[uri] = method
 }
 
-func GetTransform(uri string) (TransformMethod, error) {
+func GetTransform(uri string) (Transform, error) {
 	if method, ok := registeredTransforms[uri]; ok {
 		return method(), nil
 	}

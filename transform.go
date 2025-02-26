@@ -8,11 +8,11 @@ import (
 )
 
 type Transform struct {
-	Algorithm       string
-	XPath           string
-	transforms      *Transforms
-	cachedXml       *etree.Element
-	transformMethod transform.TransformMethod
+	Algorithm  string
+	XPath      string
+	transforms *Transforms
+	cachedXml  *etree.Element
+	Transform  transform.Transform
 }
 
 func newTransform(transforms *Transforms) *Transform {
@@ -22,19 +22,19 @@ func newTransform(transforms *Transforms) *Transform {
 }
 
 func (xml *Transform) transformXmlElement(ctx context.Context, el *etree.Element) ([]byte, error) {
-	err := xml.ensureTransformMethod()
+	err := xml.ensureTransform()
 	if err != nil {
 		return nil, err
 	}
-	return xml.transformMethod.TransformXmlElement(ctx, el)
+	return xml.Transform.TransformXmlElement(ctx, el)
 }
 
 func (xml *Transform) transformData(ctx context.Context, data []byte) ([]byte, error) {
-	err := xml.ensureTransformMethod()
+	err := xml.ensureTransform()
 	if err != nil {
 		return nil, err
 	}
-	return xml.transformMethod.TransformData(ctx, data)
+	return xml.Transform.TransformData(ctx, data)
 }
 
 func (xml *Transform) root() *SignedXml {
@@ -57,11 +57,11 @@ func (xml *Transform) loadXml(el *etree.Element) error {
 		xml.XPath = xpathElement.Text()
 	}
 
-	err = xml.ensureTransformMethod()
+	err = xml.ensureTransform()
 	if err != nil {
 		return err
 	}
-	err = xml.transformMethod.ReadXml(el)
+	err = xml.Transform.ReadXml(el)
 	if err != nil {
 		return err
 	}
@@ -82,11 +82,11 @@ func (xml *Transform) getXml() (*etree.Element, error) {
 		xpathEl.SetText(xml.XPath)
 	}
 
-	err := xml.ensureTransformMethod()
+	err := xml.ensureTransform()
 	if err != nil {
 		return nil, err
 	}
-	err = xml.transformMethod.WriteXml(el)
+	err = xml.Transform.WriteXml(el)
 	if err != nil {
 		return nil, err
 	}
@@ -94,13 +94,13 @@ func (xml *Transform) getXml() (*etree.Element, error) {
 	return el, nil
 }
 
-func (xml *Transform) ensureTransformMethod() error {
-	if xml.transformMethod == nil {
-		transformMethod, err := transform.GetTransform(xml.Algorithm)
+func (xml *Transform) ensureTransform() error {
+	if xml.Transform == nil {
+		Transform, err := transform.GetTransform(xml.Algorithm)
 		if err != nil {
 			return err
 		}
-		xml.transformMethod = transformMethod
+		xml.Transform = Transform
 	}
 	return nil
 }

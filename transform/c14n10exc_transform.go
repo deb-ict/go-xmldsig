@@ -13,13 +13,13 @@ type c14N10ExcTransform struct {
 	canonicalizer canonicalizer.Canonicalizer
 }
 
-func NewC14N10ExcTransform() TransformMethod {
+func NewC14N10ExcTransform() Transform {
 	return &c14N10ExcTransform{
 		canonicalizer: canonicalizer.NewC14N10ExcCanonicalizer(),
 	}
 }
 
-func NewC14N10ExcWithCommentsTransform() TransformMethod {
+func NewC14N10ExcWithCommentsTransform() Transform {
 	return &c14N10ExcTransform{
 		canonicalizer: canonicalizer.NewC14N10ExcWithCommentsCanonicalizer(),
 	}

@@ -11,7 +11,7 @@ import (
 type envelopedSignatureTransform struct {
 }
 
-func NewEnvelopedSignatureTransform() TransformMethod {
+func NewEnvelopedSignatureTransform() Transform {
 	return &envelopedSignatureTransform{}
 }
 
