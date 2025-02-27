@@ -17,14 +17,7 @@ type Reference struct {
 	Transforms   *Transforms
 	DigestMethod *DigestMethod
 	DigestValue  string
-	signedInfo   *SignedInfo
 	cachedXml    *etree.Element
-}
-
-func newReference(signedInfo *SignedInfo) *Reference {
-	return &Reference{
-		signedInfo: signedInfo,
-	}
 }
 
 func (xml *Reference) GetUriWithoutPrefix(prefix string) string {
@@ -34,11 +27,7 @@ func (xml *Reference) GetUriWithoutPrefix(prefix string) string {
 	return xml.Uri
 }
 
-func (xml *Reference) root() *SignedXml {
-	return xml.signedInfo.root()
-}
-
-func (xml *Reference) validateDigest(ctx context.Context) error {
+func (xml *Reference) validateDigest(ctx context.Context, doc *etree.Document) error {
 	digestBytes, err := base64.StdEncoding.DecodeString(xml.DigestValue)
 	if err != nil {
 		return err
@@ -47,10 +36,10 @@ func (xml *Reference) validateDigest(ctx context.Context) error {
 	if xml.Uri == "" || strings.HasPrefix(xml.Uri, "#") {
 		var element *etree.Element
 		if xml.Uri == "" {
-			element = xml.root().document.Root()
+			element = doc.Root()
 		} else {
 			elementId := xml.Uri[1:]
-			element = xml.root().document.FindElement("//*[@Id='" + elementId + "']")
+			element = doc.FindElement("//*[@Id='" + elementId + "']")
 		}
 		if element == nil {
 			return errors.New("element not found")
@@ -118,7 +107,7 @@ func (xml *Reference) validateDigest(ctx context.Context) error {
 	return errors.New("digest validation failed")
 }
 
-func (xml *Reference) loadXml(el *etree.Element) error {
+func (xml *Reference) LoadXml(resolver XmlResolver, el *etree.Element) error {
 	err := validateElement(el, "Reference", XmlDSigNamespaceUri)
 	if err != nil {
 		return err
@@ -134,8 +123,8 @@ func (xml *Reference) loadXml(el *etree.Element) error {
 	if err != nil {
 		return err
 	}
-	xml.Transforms = newTransforms(xml)
-	err = xml.Transforms.loadXml(transformsElement)
+	xml.Transforms = &Transforms{}
+	err = xml.Transforms.LoadXml(resolver, transformsElement)
 	if err != nil {
 		return err
 	}
@@ -145,8 +134,8 @@ func (xml *Reference) loadXml(el *etree.Element) error {
 	if err != nil {
 		return err
 	}
-	xml.DigestMethod = newDigestMethod(xml)
-	err = xml.DigestMethod.loadXml(digestMethodElement)
+	xml.DigestMethod = &DigestMethod{}
+	err = xml.DigestMethod.LoadXml(resolver, digestMethodElement)
 	if err != nil {
 		return err
 	}
@@ -158,13 +147,12 @@ func (xml *Reference) loadXml(el *etree.Element) error {
 	}
 	xml.DigestValue = digestValueElement.Text()
 
-	xml.cachedXml = el
 	return nil
 }
 
-func (xml *Reference) getXml() (*etree.Element, error) {
+func (xml *Reference) GetXml(resolver XmlResolver) (*etree.Element, error) {
 	el := etree.NewElement("Reference")
-	el.Space = xml.root().getElementSpace(XmlDSigNamespaceUri)
+	el.Space = resolver.GetElementSpace(XmlDSigNamespaceUri)
 
 	// Write the reference attributes
 	if xml.Id != "" {
@@ -179,7 +167,7 @@ func (xml *Reference) getXml() (*etree.Element, error) {
 
 	// Write the transform list
 	if xml.Transforms != nil {
-		transformElement, err := xml.Transforms.getXml()
+		transformElement, err := xml.Transforms.GetXml(resolver)
 		if err != nil {
 			return nil, err
 		}
@@ -190,7 +178,7 @@ func (xml *Reference) getXml() (*etree.Element, error) {
 	if xml.DigestMethod == nil {
 		return nil, errors.New("reference does not contain a DigestMethod element")
 	}
-	digestMethodElement, err := xml.DigestMethod.getXml()
+	digestMethodElement, err := xml.DigestMethod.GetXml(resolver)
 	if err != nil {
 		return nil, err
 	}

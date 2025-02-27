@@ -8,17 +8,9 @@ import (
 )
 
 type Transform struct {
-	Algorithm  string
-	XPath      string
-	transforms *Transforms
-	cachedXml  *etree.Element
-	Transform  transform.Transform
-}
-
-func newTransform(transforms *Transforms) *Transform {
-	return &Transform{
-		transforms: transforms,
-	}
+	Algorithm string
+	XPath     string
+	Transform transform.Transform
 }
 
 func (xml *Transform) transformXmlElement(ctx context.Context, el *etree.Element) ([]byte, error) {
@@ -37,11 +29,7 @@ func (xml *Transform) transformData(ctx context.Context, data []byte) ([]byte, e
 	return xml.Transform.TransformData(ctx, data)
 }
 
-func (xml *Transform) root() *SignedXml {
-	return xml.transforms.root()
-}
-
-func (xml *Transform) loadXml(el *etree.Element) error {
+func (xml *Transform) LoadXml(resolver XmlResolver, el *etree.Element) error {
 	err := validateElement(el, "Transform", XmlDSigNamespaceUri)
 	if err != nil {
 		return err
@@ -66,19 +54,18 @@ func (xml *Transform) loadXml(el *etree.Element) error {
 		return err
 	}
 
-	xml.cachedXml = el
 	return nil
 }
 
-func (xml *Transform) getXml() (*etree.Element, error) {
+func (xml *Transform) GetXml(resolver XmlResolver) (*etree.Element, error) {
 	el := etree.NewElement("Transform")
-	el.Space = xml.root().getElementSpace(XmlDSigNamespaceUri)
+	el.Space = resolver.GetElementSpace(XmlDSigNamespaceUri)
 
 	el.CreateAttr("Algorithm", xml.Algorithm)
 
 	if xml.XPath != "" {
 		xpathEl := el.CreateElement("XPath")
-		xpathEl.Space = xml.root().getElementSpace(XmlDSigNamespaceUri)
+		xpathEl.Space = resolver.GetElementSpace(XmlDSigNamespaceUri)
 		xpathEl.SetText(xml.XPath)
 	}
 

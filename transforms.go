@@ -8,14 +8,6 @@ import (
 
 type Transforms struct {
 	Transforms []*Transform
-	reference  *Reference
-	cachedXml  *etree.Element
-}
-
-func newTransforms(reference *Reference) *Transforms {
-	return &Transforms{
-		reference: reference,
-	}
 }
 
 func (xml *Transforms) transformXmlElement(ctx context.Context, el *etree.Element) ([]byte, error) {
@@ -45,11 +37,7 @@ func (xml *Transforms) transformData(ctx context.Context, data []byte) ([]byte, 
 	return data, nil
 }
 
-func (xml *Transforms) root() *SignedXml {
-	return xml.reference.root()
-}
-
-func (xml *Transforms) loadXml(el *etree.Element) error {
+func (xml *Transforms) LoadXml(resolver XmlResolver, el *etree.Element) error {
 	err := validateElement(el, "Transforms", XmlDSigNamespaceUri)
 	if err != nil {
 		return err
@@ -57,24 +45,23 @@ func (xml *Transforms) loadXml(el *etree.Element) error {
 
 	transformElements := el.SelectElements("Transform")
 	for _, transformElement := range transformElements {
-		transform := newTransform(xml)
-		err := transform.loadXml(transformElement)
+		transform := &Transform{}
+		err := transform.LoadXml(resolver, transformElement)
 		if err != nil {
 			return err
 		}
 		xml.Transforms = append(xml.Transforms, transform)
 	}
 
-	xml.cachedXml = el
 	return nil
 }
 
-func (xml *Transforms) getXml() (*etree.Element, error) {
+func (xml *Transforms) GetXml(resolver XmlResolver) (*etree.Element, error) {
 	el := etree.NewElement("Transforms")
-	el.Space = xml.root().getElementSpace(XmlDSigNamespaceUri)
+	el.Space = resolver.GetElementSpace(XmlDSigNamespaceUri)
 
 	for _, transform := range xml.Transforms {
-		transformElement, err := transform.getXml()
+		transformElement, err := transform.GetXml(resolver)
 		if err != nil {
 			return nil, err
 		}

@@ -6,21 +6,9 @@ import (
 
 type DigestMethod struct {
 	Algorithm string
-	reference *Reference
-	cachedXml *etree.Element
 }
 
-func newDigestMethod(reference *Reference) *DigestMethod {
-	return &DigestMethod{
-		reference: reference,
-	}
-}
-
-func (xml *DigestMethod) root() *SignedXml {
-	return xml.reference.root()
-}
-
-func (xml *DigestMethod) loadXml(el *etree.Element) error {
+func (xml *DigestMethod) LoadXml(resolver XmlResolver, el *etree.Element) error {
 	err := validateElement(el, "DigestMethod", XmlDSigNamespaceUri)
 	if err != nil {
 		return err
@@ -28,13 +16,12 @@ func (xml *DigestMethod) loadXml(el *etree.Element) error {
 
 	xml.Algorithm = el.SelectAttrValue("Algorithm", "")
 
-	xml.cachedXml = el
 	return nil
 }
 
-func (xml *DigestMethod) getXml() (*etree.Element, error) {
+func (xml *DigestMethod) GetXml(resolver XmlResolver) (*etree.Element, error) {
 	el := etree.NewElement("DigestMethod")
-	el.Space = xml.root().getElementSpace(XmlDSigNamespaceUri)
+	el.Space = resolver.GetElementSpace(XmlDSigNamespaceUri)
 
 	el.CreateAttr("Algorithm", xml.Algorithm)
 

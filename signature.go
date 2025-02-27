@@ -10,21 +10,11 @@ type Signature struct {
 	Id             string
 	SignedInfo     *SignedInfo
 	SignatureValue *SignatureValue
-	signedXml      *SignedXml
+	KeyInfo        *KeyInfo
 	cachedXml      *etree.Element
 }
 
-func newSignature(signedXml *SignedXml) *Signature {
-	return &Signature{
-		signedXml: signedXml,
-	}
-}
-
-func (xml *Signature) root() *SignedXml {
-	return xml.signedXml
-}
-
-func (xml *Signature) loadXml(el *etree.Element) error {
+func (xml *Signature) LoadXml(resolver XmlResolver, el *etree.Element) error {
 	err := validateElement(el, "Signature", XmlDSigNamespaceUri)
 	if err != nil {
 		return err
@@ -38,8 +28,8 @@ func (xml *Signature) loadXml(el *etree.Element) error {
 	if err != nil {
 		return err
 	}
-	xml.SignedInfo = newSignedInfo(xml)
-	err = xml.SignedInfo.loadXml(signedInfoElement)
+	xml.SignedInfo = &SignedInfo{}
+	err = xml.SignedInfo.LoadXml(resolver, signedInfoElement)
 	if err != nil {
 		return err
 	}
@@ -49,22 +39,30 @@ func (xml *Signature) loadXml(el *etree.Element) error {
 	if err != nil {
 		return err
 	}
-	xml.SignatureValue = newSignatureValue(xml)
-	err = xml.SignatureValue.loadXml(signatureValueElement)
+	xml.SignatureValue = &SignatureValue{}
+	err = xml.SignatureValue.LoadXml(resolver, signatureValueElement)
 	if err != nil {
 		return err
 	}
 
 	// Get the key info
-	//TODO: keyInfoElements := el.SelectElements("KeyInfo[namespace-uri()='" + XmlDSigNamespaceUri + "']")
+	keyInfoElement, err := getSingleChildElement(el, "KeyInfo", XmlDSigNamespaceUri)
+	if err != nil {
+		return err
+	}
+	xml.KeyInfo = &KeyInfo{}
+	err = xml.KeyInfo.LoadXml(resolver, keyInfoElement)
+	if err != nil {
+		return err
+	}
 
 	xml.cachedXml = el
 	return nil
 }
 
-func (xml *Signature) getXml() (*etree.Element, error) {
+func (xml *Signature) GetXml(resolver XmlResolver) (*etree.Element, error) {
 	el := etree.NewElement("Signature")
-	el.Space = xml.root().getElementSpace(XmlDSigNamespaceUri)
+	el.Space = resolver.GetElementSpace(XmlDSigNamespaceUri)
 
 	if xml.Id != "" {
 		el.CreateAttr("Id", xml.Id)
@@ -74,7 +72,7 @@ func (xml *Signature) getXml() (*etree.Element, error) {
 	if xml.SignedInfo == nil {
 		return nil, errors.New("signature does not contain a SignedInfo element")
 	}
-	signedInfoElement, err := xml.SignedInfo.getXml()
+	signedInfoElement, err := xml.SignedInfo.GetXml(resolver)
 	if err != nil {
 		return nil, err
 	}
@@ -84,14 +82,21 @@ func (xml *Signature) getXml() (*etree.Element, error) {
 	if xml.SignatureValue == nil {
 		return nil, errors.New("signature does not contain a SignatureValue element")
 	}
-	signatureValueElement, err := xml.SignatureValue.getXml()
+	signatureValueElement, err := xml.SignatureValue.GetXml(resolver)
 	if err != nil {
 		return nil, err
 	}
 	el.AddChild(signatureValueElement)
 
 	// Add the key info
-	//TODO: KeyInfo
+	if xml.KeyInfo == nil {
+		return nil, errors.New("signature does not contain a KeyInfo element")
+	}
+	keyInfoElement, err := xml.KeyInfo.GetXml(resolver)
+	if err != nil {
+		return nil, err
+	}
+	el.AddChild(keyInfoElement)
 
 	return el, nil
 }

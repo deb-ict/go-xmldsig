@@ -9,22 +9,10 @@ import (
 
 type CanonicalizationMethod struct {
 	Algorithm     string
-	signedInfo    *SignedInfo
-	cachedXml     *etree.Element
 	canonicalizer canonicalizer.Canonicalizer
 }
 
-func newCanonicalizationMethod(signedInfo *SignedInfo) *CanonicalizationMethod {
-	return &CanonicalizationMethod{
-		signedInfo: signedInfo,
-	}
-}
-
-func (xml *CanonicalizationMethod) root() *SignedXml {
-	return xml.signedInfo.root()
-}
-
-func (xml *CanonicalizationMethod) loadXml(el *etree.Element) error {
+func (xml *CanonicalizationMethod) LoadXml(resolver XmlResolver, el *etree.Element) error {
 	err := validateElement(el, "CanonicalizationMethod", XmlDSigNamespaceUri)
 	if err != nil {
 		return err
@@ -38,13 +26,12 @@ func (xml *CanonicalizationMethod) loadXml(el *etree.Element) error {
 	}
 	xml.canonicalizer = canonicalizer
 
-	xml.cachedXml = el
 	return nil
 }
 
-func (xml *CanonicalizationMethod) getXml() (*etree.Element, error) {
+func (xml *CanonicalizationMethod) GetXml(resolver XmlResolver) (*etree.Element, error) {
 	el := etree.NewElement("CanonicalizationMethod")
-	el.Space = xml.root().getElementSpace(XmlDSigNamespaceUri)
+	el.Space = resolver.GetElementSpace(XmlDSigNamespaceUri)
 
 	el.CreateAttr("Algorithm", xml.Algorithm)
 

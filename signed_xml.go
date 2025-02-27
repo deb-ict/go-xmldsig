@@ -10,17 +10,15 @@ import (
 )
 
 type SignedXml struct {
-	document   *etree.Document
-	signature  *Signature
-	nsUris     map[string]string
-	nsPrefixes map[string]string
+	document  *etree.Document
+	signature *Signature
 }
 
-func LoadSignedXml(doc *etree.Document) (*SignedXml, error) {
+func LoadSignedXml(resolver XmlResolver, doc *etree.Document) (*SignedXml, error) {
 	xml := &SignedXml{
 		document: doc,
 	}
-	err := xml.loadXml(doc)
+	err := xml.LoadXml(resolver, doc)
 	if err != nil {
 		return nil, err
 	}
@@ -32,12 +30,16 @@ func (xml *SignedXml) ValidateSignature(ctx context.Context, cert *x509.Certific
 	if xml.signature == nil || xml.signature.SignedInfo == nil {
 		return nil, errors.New("signature or signed info is nil")
 	}
-	validated, err := xml.signature.SignedInfo.validateDigests(ctx)
+	validated, err := xml.signature.SignedInfo.validateDigests(ctx, xml.document)
 	if err != nil {
 		return nil, err
 	}
 
-	err = xml.signature.SignedInfo.validateSignature(ctx, cert)
+	signatureValue, err := base64.StdEncoding.DecodeString(xml.signature.SignatureValue.Value)
+	if err != nil {
+		return nil, err
+	}
+	err = xml.signature.SignedInfo.validateSignature(ctx, cert, signatureValue)
 	if err != nil {
 		return nil, err
 	}
@@ -49,6 +51,10 @@ func (xml *SignedXml) GetCertificate() (*x509.Certificate, error) {
 	if xml.signature == nil {
 		return nil, errors.New("signature or signed info is nil")
 	}
+	if xml.signature.KeyInfo == nil {
+		return nil, errors.New("key info is nil")
+	}
+	return xml.signature.KeyInfo.GetCertificate()
 
 	signatureXml := xml.signature.cachedXml
 	if signatureXml == nil {
@@ -111,27 +117,14 @@ func (xml *SignedXml) GetCertificate() (*x509.Certificate, error) {
 	return nil, errors.New("certificate not found")
 }
 
-func (xml *SignedXml) SetNamespacePrefix(prefix string, uri string) {
-	xml.nsPrefixes[uri] = prefix
-	xml.nsUris[prefix] = uri
-}
-
-func (xml *SignedXml) getElementSpace(uri string) string {
-	prefix, found := xml.nsPrefixes[uri]
-	if !found {
-		return uri
-	}
-	return prefix
-}
-
-func (xml *SignedXml) loadXml(doc *etree.Document) error {
+func (xml *SignedXml) LoadXml(resolver XmlResolver, doc *etree.Document) error {
 	// Get the signature
 	signatureElements := doc.FindElements("//Signature[namespace-uri()='" + XmlDSigNamespaceUri + "']")
 	if len(signatureElements) != 1 {
 		return errors.New("element does not contain a single Signature element")
 	}
-	xml.signature = newSignature(xml)
-	err := xml.signature.loadXml(signatureElements[0])
+	xml.signature = &Signature{}
+	err := xml.signature.LoadXml(resolver, signatureElements[0])
 	if err != nil {
 		return err
 	}
