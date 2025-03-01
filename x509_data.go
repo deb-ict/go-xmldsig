@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 
 	"github.com/beevik/etree"
+	"github.com/deb-ict/go-xml"
 )
 
 type X509Data struct {
@@ -13,8 +14,8 @@ type X509Data struct {
 	cachedXml   *etree.Element
 }
 
-func (xml *X509Data) GetCertificate() (*x509.Certificate, error) {
-	certificateData, err := base64.StdEncoding.DecodeString(xml.Certificate)
+func (node *X509Data) GetX509Certificate(resolver xml.XmlResolver) (*x509.Certificate, error) {
+	certificateData, err := base64.StdEncoding.DecodeString(node.Certificate)
 	if err != nil {
 		return nil, err
 	}
@@ -25,30 +26,30 @@ func (xml *X509Data) GetCertificate() (*x509.Certificate, error) {
 	return certificate, nil
 }
 
-func (xml *X509Data) LoadXml(resolver XmlResolver, el *etree.Element) error {
+func (node *X509Data) LoadXml(resolver xml.XmlResolver, el *etree.Element) error {
 	err := validateElement(el, "X509Data", XmlDSigNamespaceUri)
 	if err != nil {
 		return err
 	}
 
-	xml.SubjectName = el.SelectElement("X509SubjectName").Text()
-	xml.Certificate = el.SelectElement("X509Certificate").Text()
+	node.SubjectName = el.SelectElement("X509SubjectName").Text()
+	node.Certificate = el.SelectElement("X509Certificate").Text()
 
-	xml.cachedXml = el
+	node.cachedXml = el
 	return nil
 }
 
-func (xml *X509Data) GetXml(resolver XmlResolver) (*etree.Element, error) {
+func (node *X509Data) GetXml(resolver xml.XmlResolver) (*etree.Element, error) {
 	el := etree.NewElement("X509Data")
-	el.Space = resolver.GetElementSpace(XmlDSigNamespaceUri)
+	el.Space = resolver.GetNamespacePrefix(XmlDSigNamespaceUri)
 
-	if xml.SubjectName != "" {
+	if node.SubjectName != "" {
 		subjectName := el.CreateElement("X509SubjectName")
-		subjectName.SetText(xml.SubjectName)
+		subjectName.SetText(node.SubjectName)
 	}
-	if xml.Certificate != "" {
+	if node.Certificate != "" {
 		certificate := el.CreateElement("X509Certificate")
-		certificate.SetText(xml.Certificate)
+		certificate.SetText(node.Certificate)
 	}
 
 	return el, nil

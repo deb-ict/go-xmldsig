@@ -2,6 +2,7 @@ package xmldsig
 
 import (
 	"github.com/beevik/etree"
+	"github.com/deb-ict/go-xml"
 )
 
 type SignatureValue struct {
@@ -9,26 +10,26 @@ type SignatureValue struct {
 	Value string
 }
 
-func (xml *SignatureValue) LoadXml(resolver XmlResolver, el *etree.Element) error {
+func (node *SignatureValue) LoadXml(resolver xml.XmlResolver, el *etree.Element) error {
 	err := validateElement(el, "SignatureValue", XmlDSigNamespaceUri)
 	if err != nil {
 		return err
 	}
 
-	xml.Id = el.SelectAttrValue("Id", "")
-	xml.Value = el.Text()
+	node.Id = el.SelectAttrValue("Id", "")
+	node.Value = el.Text()
 
 	return nil
 }
 
-func (xml *SignatureValue) GetXml(resolver XmlResolver) (*etree.Element, error) {
+func (node *SignatureValue) GetXml(resolver xml.XmlResolver) (*etree.Element, error) {
 	el := etree.NewElement("SignatureValue")
-	el.Space = resolver.GetElementSpace(XmlDSigNamespaceUri)
+	el.Space = resolver.GetNamespacePrefix(XmlDSigNamespaceUri)
 
-	if xml.Id != "" {
-		el.CreateAttr("Id", xml.Id)
+	if node.Id != "" {
+		el.CreateAttr("Id", node.Id)
 	}
-	el.SetText(xml.Value)
+	el.SetText(node.Value)
 
 	return el, nil
 }

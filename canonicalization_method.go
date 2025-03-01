@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/beevik/etree"
+	"github.com/deb-ict/go-xml"
 	"github.com/deb-ict/go-xmldsig/canonicalizer"
 )
 
@@ -12,33 +13,33 @@ type CanonicalizationMethod struct {
 	canonicalizer canonicalizer.Canonicalizer
 }
 
-func (xml *CanonicalizationMethod) LoadXml(resolver XmlResolver, el *etree.Element) error {
+func (node *CanonicalizationMethod) LoadXml(resolver xml.XmlResolver, el *etree.Element) error {
 	err := validateElement(el, "CanonicalizationMethod", XmlDSigNamespaceUri)
 	if err != nil {
 		return err
 	}
 
-	xml.Algorithm = el.SelectAttrValue("Algorithm", "")
+	node.Algorithm = el.SelectAttrValue("Algorithm", "")
 
-	canonicalizer, err := canonicalizer.LoadCanonicalizer(xml.Algorithm, el)
+	canonicalizer, err := canonicalizer.LoadCanonicalizer(node.Algorithm, el)
 	if err != nil {
 		return err
 	}
-	xml.canonicalizer = canonicalizer
+	node.canonicalizer = canonicalizer
 
 	return nil
 }
 
-func (xml *CanonicalizationMethod) GetXml(resolver XmlResolver) (*etree.Element, error) {
+func (node *CanonicalizationMethod) GetXml(resolver xml.XmlResolver) (*etree.Element, error) {
 	el := etree.NewElement("CanonicalizationMethod")
-	el.Space = resolver.GetElementSpace(XmlDSigNamespaceUri)
+	el.Space = resolver.GetNamespacePrefix(XmlDSigNamespaceUri)
 
-	el.CreateAttr("Algorithm", xml.Algorithm)
+	el.CreateAttr("Algorithm", node.Algorithm)
 
-	if xml.canonicalizer == nil {
+	if node.canonicalizer == nil {
 		return nil, errors.New("canonicalizer is nil")
 	}
-	err := xml.canonicalizer.WriteXml(el)
+	err := node.canonicalizer.WriteXml(el)
 	if err != nil {
 		return nil, err
 	}

@@ -12,3 +12,8 @@ require (
 	github.com/deb-ict/go-xmlsecurity v0.0.1-alpha // indirect
 	github.com/jonboulle/clockwork v0.5.0 // indirect
 )
+
+replace (
+	github.com/deb-ict/go-xml v0.0.1-alpha => ../go-xml
+	github.com/deb-ict/go-xmlsecurity v0.0.1-alpha => ../go-xmlsecurity
+)

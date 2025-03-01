@@ -4,16 +4,17 @@ import (
 	"context"
 
 	"github.com/beevik/etree"
+	"github.com/deb-ict/go-xml"
 )
 
 type Transforms struct {
 	Transforms []*Transform
 }
 
-func (xml *Transforms) transformXmlElement(ctx context.Context, el *etree.Element) ([]byte, error) {
+func (node *Transforms) transformXmlElement(ctx context.Context, el *etree.Element) ([]byte, error) {
 	var data []byte
 	var err error
-	for _, transform := range xml.Transforms {
+	for _, transform := range node.Transforms {
 		if data == nil {
 			data, err = transform.transformXmlElement(ctx, el)
 		} else {
@@ -26,9 +27,9 @@ func (xml *Transforms) transformXmlElement(ctx context.Context, el *etree.Elemen
 	return data, nil
 }
 
-func (xml *Transforms) transformData(ctx context.Context, data []byte) ([]byte, error) {
+func (node *Transforms) transformData(ctx context.Context, data []byte) ([]byte, error) {
 	var err error
-	for _, transform := range xml.Transforms {
+	for _, transform := range node.Transforms {
 		data, err = transform.transformData(ctx, data)
 		if err != nil {
 			return nil, err
@@ -37,7 +38,7 @@ func (xml *Transforms) transformData(ctx context.Context, data []byte) ([]byte, 
 	return data, nil
 }
 
-func (xml *Transforms) LoadXml(resolver XmlResolver, el *etree.Element) error {
+func (node *Transforms) LoadXml(resolver xml.XmlResolver, el *etree.Element) error {
 	err := validateElement(el, "Transforms", XmlDSigNamespaceUri)
 	if err != nil {
 		return err
@@ -50,17 +51,17 @@ func (xml *Transforms) LoadXml(resolver XmlResolver, el *etree.Element) error {
 		if err != nil {
 			return err
 		}
-		xml.Transforms = append(xml.Transforms, transform)
+		node.Transforms = append(node.Transforms, transform)
 	}
 
 	return nil
 }
 
-func (xml *Transforms) GetXml(resolver XmlResolver) (*etree.Element, error) {
+func (node *Transforms) GetXml(resolver xml.XmlResolver) (*etree.Element, error) {
 	el := etree.NewElement("Transforms")
-	el.Space = resolver.GetElementSpace(XmlDSigNamespaceUri)
+	el.Space = resolver.GetNamespacePrefix(XmlDSigNamespaceUri)
 
-	for _, transform := range xml.Transforms {
+	for _, transform := range node.Transforms {
 		transformElement, err := transform.GetXml(resolver)
 		if err != nil {
 			return nil, err

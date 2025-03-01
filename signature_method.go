@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/beevik/etree"
+	"github.com/deb-ict/go-xml"
 )
 
 type SignatureMethod struct {
@@ -11,13 +12,13 @@ type SignatureMethod struct {
 	HMACOutputLength int
 }
 
-func (xml *SignatureMethod) LoadXml(resolver XmlResolver, el *etree.Element) error {
+func (node *SignatureMethod) LoadXml(resolver xml.XmlResolver, el *etree.Element) error {
 	err := validateElement(el, "SignatureMethod", XmlDSigNamespaceUri)
 	if err != nil {
 		return err
 	}
 
-	xml.Algorithm = el.SelectAttrValue("Algorithm", "")
+	node.Algorithm = el.SelectAttrValue("Algorithm", "")
 
 	hmacOutputLengthElement, err := getOptionalSingleChildElement(el, "HMACOutputLength", XmlDSigNamespaceUri)
 	if err != nil {
@@ -28,22 +29,22 @@ func (xml *SignatureMethod) LoadXml(resolver XmlResolver, el *etree.Element) err
 		if err != nil {
 			return err
 		}
-		xml.HMACOutputLength = hmacOutputLengthValue
+		node.HMACOutputLength = hmacOutputLengthValue
 	}
 
 	return nil
 }
 
-func (xml *SignatureMethod) GetXml(resolver XmlResolver) (*etree.Element, error) {
+func (node *SignatureMethod) GetXml(resolver xml.XmlResolver) (*etree.Element, error) {
 	el := etree.NewElement("SignatureMethod")
-	el.Space = resolver.GetElementSpace(XmlDSigNamespaceUri)
+	el.Space = resolver.GetNamespacePrefix(XmlDSigNamespaceUri)
 
-	el.CreateAttr("Algorithm", xml.Algorithm)
+	el.CreateAttr("Algorithm", node.Algorithm)
 
-	if xml.HMACOutputLength != 0 {
+	if node.HMACOutputLength != 0 {
 		hmacOutputLengthElement := el.CreateElement("HMACOutputLength")
-		hmacOutputLengthElement.Space = resolver.GetElementSpace(XmlDSigNamespaceUri)
-		hmacOutputLengthElement.SetText(strconv.Itoa(xml.HMACOutputLength))
+		hmacOutputLengthElement.Space = resolver.GetNamespacePrefix(XmlDSigNamespaceUri)
+		hmacOutputLengthElement.SetText(strconv.Itoa(node.HMACOutputLength))
 	}
 
 	return el, nil

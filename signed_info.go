@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"github.com/beevik/etree"
+	"github.com/deb-ict/go-xml"
 	rhtree "github.com/russellhaering/goxmldsig/etreeutils"
 )
 
@@ -17,9 +18,9 @@ type SignedInfo struct {
 	cachedXml              *etree.Element
 }
 
-func (xml *SignedInfo) validateDigests(ctx context.Context, doc *etree.Document) ([]*etree.Element, error) {
+func (node *SignedInfo) validateDigests(ctx context.Context, doc *etree.Document) ([]*etree.Element, error) {
 	validated := make([]*etree.Element, 0)
-	for _, reference := range xml.References {
+	for _, reference := range node.References {
 		err := reference.validateDigest(ctx, doc)
 		if err != nil {
 			return nil, err
@@ -29,22 +30,22 @@ func (xml *SignedInfo) validateDigests(ctx context.Context, doc *etree.Document)
 	return validated, nil
 }
 
-func (xml *SignedInfo) validateSignature(ctx context.Context, cert *x509.Certificate, signatureValue []byte) error {
-	elementNsContext, err := rhtree.NSBuildParentContext(xml.cachedXml)
+func (node *SignedInfo) validateSignature(ctx context.Context, cert *x509.Certificate, signatureValue []byte) error {
+	elementNsContext, err := rhtree.NSBuildParentContext(node.cachedXml)
 	if err != nil {
 		return err
 	}
-	detachtedElement, err := rhtree.NSDetatch(elementNsContext, xml.cachedXml)
-	if err != nil {
-		return err
-	}
-
-	canonicalizedData, err := xml.CanonicalizationMethod.canonicalizer.Canonicalize(ctx, detachtedElement)
+	detachtedElement, err := rhtree.NSDetatch(elementNsContext, node.cachedXml)
 	if err != nil {
 		return err
 	}
 
-	signatureMethod, err := GetSignatureMethod(xml.SignatureMethod.Algorithm)
+	canonicalizedData, err := node.CanonicalizationMethod.canonicalizer.Canonicalize(ctx, detachtedElement)
+	if err != nil {
+		return err
+	}
+
+	signatureMethod, err := GetSignatureMethod(node.SignatureMethod.Algorithm)
 	if err != nil {
 		return err
 	}
@@ -61,7 +62,7 @@ func (xml *SignedInfo) validateSignature(ctx context.Context, cert *x509.Certifi
 	return nil
 }
 
-func (xml *SignedInfo) LoadXml(resolver XmlResolver, el *etree.Element) error {
+func (node *SignedInfo) LoadXml(resolver xml.XmlResolver, el *etree.Element) error {
 	err := validateElement(el, "SignedInfo", XmlDSigNamespaceUri)
 	if err != nil {
 		return err
@@ -72,8 +73,8 @@ func (xml *SignedInfo) LoadXml(resolver XmlResolver, el *etree.Element) error {
 	if err != nil {
 		return err
 	}
-	xml.CanonicalizationMethod = &CanonicalizationMethod{}
-	err = xml.CanonicalizationMethod.LoadXml(resolver, canonicalizationMethodElement)
+	node.CanonicalizationMethod = &CanonicalizationMethod{}
+	err = node.CanonicalizationMethod.LoadXml(resolver, canonicalizationMethodElement)
 	if err != nil {
 		return err
 	}
@@ -83,8 +84,8 @@ func (xml *SignedInfo) LoadXml(resolver XmlResolver, el *etree.Element) error {
 	if err != nil {
 		return err
 	}
-	xml.SignatureMethod = &SignatureMethod{}
-	err = xml.SignatureMethod.LoadXml(resolver, signatureMethodElement)
+	node.SignatureMethod = &SignatureMethod{}
+	err = node.SignatureMethod.LoadXml(resolver, signatureMethodElement)
 	if err != nil {
 		return err
 	}
@@ -97,40 +98,40 @@ func (xml *SignedInfo) LoadXml(resolver XmlResolver, el *etree.Element) error {
 		if err != nil {
 			return err
 		}
-		xml.References = append(xml.References, reference)
+		node.References = append(node.References, reference)
 	}
 
-	xml.cachedXml = el
+	node.cachedXml = el
 	return nil
 }
 
-func (xml *SignedInfo) GetXml(resolver XmlResolver) (*etree.Element, error) {
+func (node *SignedInfo) GetXml(resolver xml.XmlResolver) (*etree.Element, error) {
 	el := etree.NewElement("SignedInfo")
-	el.Space = resolver.GetElementSpace(XmlDSigNamespaceUri)
+	el.Space = resolver.GetNamespacePrefix(XmlDSigNamespaceUri)
 
-	if xml.Id != "" {
-		el.CreateAttr("Id", xml.Id)
+	if node.Id != "" {
+		el.CreateAttr("Id", node.Id)
 	}
 
-	if xml.CanonicalizationMethod == nil {
+	if node.CanonicalizationMethod == nil {
 		return nil, errors.New("signed info does not contain a CanonicalizationMethod element")
 	}
-	canonicalizationMethodElement, err := xml.CanonicalizationMethod.GetXml(resolver)
+	canonicalizationMethodElement, err := node.CanonicalizationMethod.GetXml(resolver)
 	if err != nil {
 		return nil, err
 	}
 	el.AddChild(canonicalizationMethodElement)
 
-	if xml.SignatureMethod == nil {
+	if node.SignatureMethod == nil {
 		return nil, errors.New("signed info does not contain a SignatureMethod element")
 	}
-	signatureMethodElement, err := xml.SignatureMethod.GetXml(resolver)
+	signatureMethodElement, err := node.SignatureMethod.GetXml(resolver)
 	if err != nil {
 		return nil, err
 	}
 	el.AddChild(signatureMethodElement)
 
-	for _, reference := range xml.References {
+	for _, reference := range node.References {
 		referenceElement, err := reference.GetXml(resolver)
 		if err != nil {
 			return nil, err

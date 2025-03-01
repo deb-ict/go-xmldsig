@@ -5,84 +5,101 @@ import (
 	"errors"
 
 	"github.com/beevik/etree"
+	"github.com/deb-ict/go-xml"
+	"github.com/deb-ict/go-xmlsecurity"
 )
 
 type KeyInfo struct {
 	Id       string
 	X509Data *X509Data
-	Other    XmlNode
+	Other    xml.XmlNode
 }
 
-func (xml *KeyInfo) GetCertificate() (*x509.Certificate, error) {
-	if xml.X509Data != nil {
-		return xml.X509Data.GetCertificate()
+func (node *KeyInfo) GetX509Certificate(resolver xml.XmlResolver) (*x509.Certificate, error) {
+	if node.X509Data != nil {
+		return node.X509Data.GetX509Certificate(resolver)
 	}
 
-	provider, ok := xml.Other.(CertificateProvider)
+	provider, ok := node.Other.(xmlsecurity.X509CertificateProvider)
 	if !ok {
 		return nil, errors.New("KeyInfo does not contain a certificate provider")
 	}
-	return provider.GetCertificate()
+	return provider.GetX509Certificate(resolver)
 }
 
-func (xml *KeyInfo) LoadXml(resolver XmlResolver, el *etree.Element) error {
+func (node *KeyInfo) LoadXml(resolver xml.XmlResolver, el *etree.Element) error {
 	err := validateElement(el, "KeyInfo", XmlDSigNamespaceUri)
 	if err != nil {
 		return err
 	}
 
-	xml.Id = el.SelectAttrValue("Id", "")
+	node.Id = el.SelectAttrValue("Id", "")
 
 	for _, child := range el.ChildElements() {
 		if child.Space == XmlDSigNamespaceUri {
 			switch child.Tag {
 			case "X509Data":
-				xml.X509Data = &X509Data{}
-				err = xml.X509Data.LoadXml(resolver, child)
-				if err != nil {
-					return err
-				}
+				err = node.loadX509Data(resolver, child)
 			default:
-				return errors.New("unexpected element in KeyInfo")
+				err = errors.New("unexpected element in KeyInfo")
 			}
 		} else {
-			typeConstructor, err := resolver.GetTypeConstructor(child.Space, child.Tag)
-			if err != nil {
-				return err
-			}
-			other, err := typeConstructor(resolver)
-			if err != nil {
-				return err
-			}
-			err = other.LoadXml(resolver, child)
-			if err != nil {
-				return err
-			}
-			xml.Other = other
+			err = node.loadOther(resolver, child)
+		}
+		if err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
 
-func (xml *KeyInfo) GetXml(resolver XmlResolver) (*etree.Element, error) {
-	el := etree.NewElement("KeyInfo")
-	el.Space = resolver.GetElementSpace(XmlDSigNamespaceUri)
-
-	if xml.Id != "" {
-		el.CreateAttr("Id", xml.Id)
+func (node *KeyInfo) loadX509Data(resolver xml.XmlResolver, el *etree.Element) error {
+	err := validateElement(el, "X509Data", XmlDSigNamespaceUri)
+	if err != nil {
+		return err
 	}
 
-	if xml.X509Data != nil {
-		x509DataElement, err := xml.X509Data.GetXml(resolver)
+	node.X509Data = &X509Data{}
+	return node.X509Data.LoadXml(resolver, el)
+}
+
+func (node *KeyInfo) loadOther(resolver xml.XmlResolver, el *etree.Element) error {
+	typeConstructor, err := resolver.GetTypeConstructor(el.Space, el.Tag)
+	if err != nil {
+		return err
+	}
+	other, err := typeConstructor(resolver)
+	if err != nil {
+		return err
+	}
+	err = other.LoadXml(resolver, el)
+	if err != nil {
+		return err
+	}
+
+	node.Other = other
+	return nil
+}
+
+func (node *KeyInfo) GetXml(resolver xml.XmlResolver) (*etree.Element, error) {
+	el := etree.NewElement("KeyInfo")
+	el.Space = resolver.GetNamespacePrefix(XmlDSigNamespaceUri)
+
+	if node.Id != "" {
+		el.CreateAttr("Id", node.Id)
+	}
+
+	if node.X509Data != nil {
+		x509DataElement, err := node.X509Data.GetXml(resolver)
 		if err != nil {
 			return nil, err
 		}
 		el.AddChild(x509DataElement)
 	}
 
-	if xml.Other != nil {
-		otherElement, err := xml.Other.GetXml(resolver)
+	if node.Other != nil {
+		otherElement, err := node.Other.GetXml(resolver)
 		if err != nil {
 			return nil, err
 		}

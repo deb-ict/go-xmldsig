@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/beevik/etree"
+	"github.com/deb-ict/go-xml"
 )
 
 type Reference struct {
@@ -20,25 +21,25 @@ type Reference struct {
 	cachedXml    *etree.Element
 }
 
-func (xml *Reference) GetUriWithoutPrefix(prefix string) string {
-	if strings.HasPrefix(xml.Uri, prefix) {
-		return xml.Uri[len(prefix):]
+func (node *Reference) GetUriWithoutPrefix(prefix string) string {
+	if strings.HasPrefix(node.Uri, prefix) {
+		return node.Uri[len(prefix):]
 	}
-	return xml.Uri
+	return node.Uri
 }
 
-func (xml *Reference) validateDigest(ctx context.Context, doc *etree.Document) error {
-	digestBytes, err := base64.StdEncoding.DecodeString(xml.DigestValue)
+func (node *Reference) validateDigest(ctx context.Context, doc *etree.Document) error {
+	digestBytes, err := base64.StdEncoding.DecodeString(node.DigestValue)
 	if err != nil {
 		return err
 	}
 
-	if xml.Uri == "" || strings.HasPrefix(xml.Uri, "#") {
+	if node.Uri == "" || strings.HasPrefix(node.Uri, "#") {
 		var element *etree.Element
-		if xml.Uri == "" {
+		if node.Uri == "" {
 			element = doc.Root()
 		} else {
-			elementId := xml.Uri[1:]
+			elementId := node.Uri[1:]
 			element = doc.FindElement("//*[@Id='" + elementId + "']")
 		}
 		if element == nil {
@@ -46,13 +47,13 @@ func (xml *Reference) validateDigest(ctx context.Context, doc *etree.Document) e
 		}
 
 		// Apply the transforms
-		data, err := xml.Transforms.transformXmlElement(ctx, element)
+		data, err := node.Transforms.transformXmlElement(ctx, element)
 		if err != nil {
 			return err
 		}
 
 		// Calculate the digest
-		digestMethod, err := GetDigestMethod(xml.DigestMethod.Algorithm)
+		digestMethod, err := GetDigestMethod(node.DigestMethod.Algorithm)
 		if err != nil {
 			return err
 		}
@@ -68,9 +69,9 @@ func (xml *Reference) validateDigest(ctx context.Context, doc *etree.Document) e
 	} else {
 		prefixes := GetReferenceResolverPrefixes()
 		for _, prefix := range prefixes {
-			if strings.HasPrefix(xml.Uri, prefix) {
+			if strings.HasPrefix(node.Uri, prefix) {
 				if method, ok := GetReferenceElementResolver(prefix); ok {
-					reader, err := method(ctx, xml)
+					reader, err := method(ctx, node)
 					if err != nil {
 						return err
 					}
@@ -80,13 +81,13 @@ func (xml *Reference) validateDigest(ctx context.Context, doc *etree.Document) e
 					if err != nil {
 						return err
 					}
-					data, err = xml.Transforms.transformData(ctx, data)
+					data, err = node.Transforms.transformData(ctx, data)
 					if err != nil {
 						return err
 					}
 
 					// Calculate the digest
-					digestMethod, err := GetDigestMethod(xml.DigestMethod.Algorithm)
+					digestMethod, err := GetDigestMethod(node.DigestMethod.Algorithm)
 					if err != nil {
 						return err
 					}
@@ -107,24 +108,24 @@ func (xml *Reference) validateDigest(ctx context.Context, doc *etree.Document) e
 	return errors.New("digest validation failed")
 }
 
-func (xml *Reference) LoadXml(resolver XmlResolver, el *etree.Element) error {
+func (node *Reference) LoadXml(resolver xml.XmlResolver, el *etree.Element) error {
 	err := validateElement(el, "Reference", XmlDSigNamespaceUri)
 	if err != nil {
 		return err
 	}
 
 	// Get the reference attributes
-	xml.Id = el.SelectAttrValue("Id", "")
-	xml.Uri = el.SelectAttrValue("URI", "")
-	xml.Type = el.SelectAttrValue("Type", "")
+	node.Id = el.SelectAttrValue("Id", "")
+	node.Uri = el.SelectAttrValue("URI", "")
+	node.Type = el.SelectAttrValue("Type", "")
 
 	// Get the transform list element
 	transformsElement, err := getOptionalSingleChildElement(el, "Transforms", XmlDSigNamespaceUri)
 	if err != nil {
 		return err
 	}
-	xml.Transforms = &Transforms{}
-	err = xml.Transforms.LoadXml(resolver, transformsElement)
+	node.Transforms = &Transforms{}
+	err = node.Transforms.LoadXml(resolver, transformsElement)
 	if err != nil {
 		return err
 	}
@@ -134,8 +135,8 @@ func (xml *Reference) LoadXml(resolver XmlResolver, el *etree.Element) error {
 	if err != nil {
 		return err
 	}
-	xml.DigestMethod = &DigestMethod{}
-	err = xml.DigestMethod.LoadXml(resolver, digestMethodElement)
+	node.DigestMethod = &DigestMethod{}
+	err = node.DigestMethod.LoadXml(resolver, digestMethodElement)
 	if err != nil {
 		return err
 	}
@@ -145,29 +146,29 @@ func (xml *Reference) LoadXml(resolver XmlResolver, el *etree.Element) error {
 	if err != nil {
 		return err
 	}
-	xml.DigestValue = digestValueElement.Text()
+	node.DigestValue = digestValueElement.Text()
 
 	return nil
 }
 
-func (xml *Reference) GetXml(resolver XmlResolver) (*etree.Element, error) {
+func (node *Reference) GetXml(resolver xml.XmlResolver) (*etree.Element, error) {
 	el := etree.NewElement("Reference")
-	el.Space = resolver.GetElementSpace(XmlDSigNamespaceUri)
+	el.Space = resolver.GetNamespacePrefix(XmlDSigNamespaceUri)
 
 	// Write the reference attributes
-	if xml.Id != "" {
-		el.CreateAttr("Id", xml.Id)
+	if node.Id != "" {
+		el.CreateAttr("Id", node.Id)
 	}
-	if xml.Uri != "" {
-		el.CreateAttr("URI", xml.Uri)
+	if node.Uri != "" {
+		el.CreateAttr("URI", node.Uri)
 	}
-	if xml.Type != "" {
-		el.CreateAttr("Type", xml.Type)
+	if node.Type != "" {
+		el.CreateAttr("Type", node.Type)
 	}
 
 	// Write the transform list
-	if xml.Transforms != nil {
-		transformElement, err := xml.Transforms.GetXml(resolver)
+	if node.Transforms != nil {
+		transformElement, err := node.Transforms.GetXml(resolver)
 		if err != nil {
 			return nil, err
 		}
@@ -175,21 +176,21 @@ func (xml *Reference) GetXml(resolver XmlResolver) (*etree.Element, error) {
 	}
 
 	// Write the digest method
-	if xml.DigestMethod == nil {
+	if node.DigestMethod == nil {
 		return nil, errors.New("reference does not contain a DigestMethod element")
 	}
-	digestMethodElement, err := xml.DigestMethod.GetXml(resolver)
+	digestMethodElement, err := node.DigestMethod.GetXml(resolver)
 	if err != nil {
 		return nil, err
 	}
 	el.AddChild(digestMethodElement)
 
 	// Write the digest value
-	if xml.DigestValue == "" {
+	if node.DigestValue == "" {
 		return nil, errors.New("reference does not contain a DigestValue element")
 	}
 	digestValueElement := etree.NewElement("DigestValue")
-	digestValueElement.SetText(xml.DigestValue)
+	digestValueElement.SetText(node.DigestValue)
 	el.AddChild(digestValueElement)
 
 	return el, nil

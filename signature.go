@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/beevik/etree"
+	"github.com/deb-ict/go-xml"
 )
 
 type Signature struct {
@@ -14,22 +15,22 @@ type Signature struct {
 	cachedXml      *etree.Element
 }
 
-func (xml *Signature) LoadXml(resolver XmlResolver, el *etree.Element) error {
+func (node *Signature) LoadXml(resolver xml.XmlResolver, el *etree.Element) error {
 	err := validateElement(el, "Signature", XmlDSigNamespaceUri)
 	if err != nil {
 		return err
 	}
 
 	// Get the attributes
-	xml.Id = el.SelectAttrValue("Id", "")
+	node.Id = el.SelectAttrValue("Id", "")
 
 	// Get the signed info
 	signedInfoElement, err := getSingleChildElement(el, "SignedInfo", XmlDSigNamespaceUri)
 	if err != nil {
 		return err
 	}
-	xml.SignedInfo = &SignedInfo{}
-	err = xml.SignedInfo.LoadXml(resolver, signedInfoElement)
+	node.SignedInfo = &SignedInfo{}
+	err = node.SignedInfo.LoadXml(resolver, signedInfoElement)
 	if err != nil {
 		return err
 	}
@@ -39,8 +40,8 @@ func (xml *Signature) LoadXml(resolver XmlResolver, el *etree.Element) error {
 	if err != nil {
 		return err
 	}
-	xml.SignatureValue = &SignatureValue{}
-	err = xml.SignatureValue.LoadXml(resolver, signatureValueElement)
+	node.SignatureValue = &SignatureValue{}
+	err = node.SignatureValue.LoadXml(resolver, signatureValueElement)
 	if err != nil {
 		return err
 	}
@@ -50,49 +51,49 @@ func (xml *Signature) LoadXml(resolver XmlResolver, el *etree.Element) error {
 	if err != nil {
 		return err
 	}
-	xml.KeyInfo = &KeyInfo{}
-	err = xml.KeyInfo.LoadXml(resolver, keyInfoElement)
+	node.KeyInfo = &KeyInfo{}
+	err = node.KeyInfo.LoadXml(resolver, keyInfoElement)
 	if err != nil {
 		return err
 	}
 
-	xml.cachedXml = el
+	node.cachedXml = el
 	return nil
 }
 
-func (xml *Signature) GetXml(resolver XmlResolver) (*etree.Element, error) {
+func (node *Signature) GetXml(resolver xml.XmlResolver) (*etree.Element, error) {
 	el := etree.NewElement("Signature")
-	el.Space = resolver.GetElementSpace(XmlDSigNamespaceUri)
+	el.Space = resolver.GetNamespacePrefix(XmlDSigNamespaceUri)
 
-	if xml.Id != "" {
-		el.CreateAttr("Id", xml.Id)
+	if node.Id != "" {
+		el.CreateAttr("Id", node.Id)
 	}
 
 	// Add the signed info
-	if xml.SignedInfo == nil {
+	if node.SignedInfo == nil {
 		return nil, errors.New("signature does not contain a SignedInfo element")
 	}
-	signedInfoElement, err := xml.SignedInfo.GetXml(resolver)
+	signedInfoElement, err := node.SignedInfo.GetXml(resolver)
 	if err != nil {
 		return nil, err
 	}
 	el.AddChild(signedInfoElement)
 
 	// Add the signature value
-	if xml.SignatureValue == nil {
+	if node.SignatureValue == nil {
 		return nil, errors.New("signature does not contain a SignatureValue element")
 	}
-	signatureValueElement, err := xml.SignatureValue.GetXml(resolver)
+	signatureValueElement, err := node.SignatureValue.GetXml(resolver)
 	if err != nil {
 		return nil, err
 	}
 	el.AddChild(signatureValueElement)
 
 	// Add the key info
-	if xml.KeyInfo == nil {
+	if node.KeyInfo == nil {
 		return nil, errors.New("signature does not contain a KeyInfo element")
 	}
-	keyInfoElement, err := xml.KeyInfo.GetXml(resolver)
+	keyInfoElement, err := node.KeyInfo.GetXml(resolver)
 	if err != nil {
 		return nil, err
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/beevik/etree"
+	"github.com/deb-ict/go-xml"
 	"github.com/deb-ict/go-xmldsig/transform"
 )
 
@@ -13,43 +14,43 @@ type Transform struct {
 	Transform transform.Transform
 }
 
-func (xml *Transform) transformXmlElement(ctx context.Context, el *etree.Element) ([]byte, error) {
-	err := xml.ensureTransform()
+func (node *Transform) transformXmlElement(ctx context.Context, el *etree.Element) ([]byte, error) {
+	err := node.ensureTransform()
 	if err != nil {
 		return nil, err
 	}
-	return xml.Transform.TransformXmlElement(ctx, el)
+	return node.Transform.TransformXmlElement(ctx, el)
 }
 
-func (xml *Transform) transformData(ctx context.Context, data []byte) ([]byte, error) {
-	err := xml.ensureTransform()
+func (node *Transform) transformData(ctx context.Context, data []byte) ([]byte, error) {
+	err := node.ensureTransform()
 	if err != nil {
 		return nil, err
 	}
-	return xml.Transform.TransformData(ctx, data)
+	return node.Transform.TransformData(ctx, data)
 }
 
-func (xml *Transform) LoadXml(resolver XmlResolver, el *etree.Element) error {
+func (node *Transform) LoadXml(resolver xml.XmlResolver, el *etree.Element) error {
 	err := validateElement(el, "Transform", XmlDSigNamespaceUri)
 	if err != nil {
 		return err
 	}
 
-	xml.Algorithm = el.SelectAttrValue("Algorithm", "")
+	node.Algorithm = el.SelectAttrValue("Algorithm", "")
 
 	xpathElement, err := getOptionalSingleChildElement(el, "XPath", XmlDSigNamespaceUri)
 	if err != nil {
 		return err
 	}
 	if xpathElement != nil {
-		xml.XPath = xpathElement.Text()
+		node.XPath = xpathElement.Text()
 	}
 
-	err = xml.ensureTransform()
+	err = node.ensureTransform()
 	if err != nil {
 		return err
 	}
-	err = xml.Transform.ReadXml(el)
+	err = node.Transform.ReadXml(el)
 	if err != nil {
 		return err
 	}
@@ -57,23 +58,23 @@ func (xml *Transform) LoadXml(resolver XmlResolver, el *etree.Element) error {
 	return nil
 }
 
-func (xml *Transform) GetXml(resolver XmlResolver) (*etree.Element, error) {
+func (node *Transform) GetXml(resolver xml.XmlResolver) (*etree.Element, error) {
 	el := etree.NewElement("Transform")
-	el.Space = resolver.GetElementSpace(XmlDSigNamespaceUri)
+	el.Space = resolver.GetNamespacePrefix(XmlDSigNamespaceUri)
 
-	el.CreateAttr("Algorithm", xml.Algorithm)
+	el.CreateAttr("Algorithm", node.Algorithm)
 
-	if xml.XPath != "" {
+	if node.XPath != "" {
 		xpathEl := el.CreateElement("XPath")
-		xpathEl.Space = resolver.GetElementSpace(XmlDSigNamespaceUri)
-		xpathEl.SetText(xml.XPath)
+		xpathEl.Space = resolver.GetNamespacePrefix(XmlDSigNamespaceUri)
+		xpathEl.SetText(node.XPath)
 	}
 
-	err := xml.ensureTransform()
+	err := node.ensureTransform()
 	if err != nil {
 		return nil, err
 	}
-	err = xml.Transform.WriteXml(el)
+	err = node.Transform.WriteXml(el)
 	if err != nil {
 		return nil, err
 	}
@@ -81,13 +82,13 @@ func (xml *Transform) GetXml(resolver XmlResolver) (*etree.Element, error) {
 	return el, nil
 }
 
-func (xml *Transform) ensureTransform() error {
-	if xml.Transform == nil {
-		Transform, err := transform.GetTransform(xml.Algorithm)
+func (node *Transform) ensureTransform() error {
+	if node.Transform == nil {
+		Transform, err := transform.GetTransform(node.Algorithm)
 		if err != nil {
 			return err
 		}
-		xml.Transform = Transform
+		node.Transform = Transform
 	}
 	return nil
 }
