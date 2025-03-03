@@ -1,5 +1,11 @@
+
 # go-xmldsig
-XML Digital Signature
+
+[![Build & Test](https://github.com/deb-ict/go-xmldsig/actions/workflows/build.yml/badge.svg)](https://github.com/deb-ict/go-xmldsig/actions/workflows/build.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=deb-ict_go-xmldsig&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=deb-ict_go-xmldsig)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=deb-ict_go-xmldsig&metric=coverage)](https://sonarcloud.io/summary/new_code?id=deb-ict_go-xmldsig)
+
+XML digital signature
 
 ## Installation
 Install `go-xmldsig` using `go get`:
